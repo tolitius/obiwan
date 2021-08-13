@@ -1,0 +1,17 @@
+{:paths ["src"]
+
+ :deps {org.clojure/tools.logging {:mvn/version "1.1.0"}
+        redis.clients/jedis {:mvn/version "3.6.3"}}
+
+ :aliases {:dev {:extra-deps {metosin/jsonista {:mvn/version "0.3.3"}}}
+           :outdated {:extra-deps {olical/depot {:mvn/version "2.0.1"}}
+                      :main-opts  ["-m" "depot.outdated.main" "-a" "outdated"]}
+           :tag {:extra-deps {tolitius/tag {:mvn/version "0.1.7"}}
+                 :main-opts ["-m" "tag.core" "tolitius/obiwan" "redis clojure client based on jedis"]}
+           :jar {:extra-deps {seancorfield/depstar {:mvn/version "1.1.128"}}
+                 :extra-paths ["target/about"]
+                 :main-opts ["-m" "hf.depstar.jar" "target/obiwan.jar" "--exclude" "clojure/core/specs/alpha.*"]}
+           :deploy {:extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}
+                    :main-opts ["-m" "deps-deploy.deps-deploy" "deploy" "target/obiwan.jar"]}
+           :install {:extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}
+                     :main-opts ["-m" "deps-deploy.deps-deploy" "install" "target/obiwan.jar"]}}}
