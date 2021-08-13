@@ -17,6 +17,7 @@ $ make repl
 
 => (require '[obiwan.core :as redis])
 
+;; by default would connect to a local redis 127.0.0.1:6379 with a 42 thread connection pool
 => (def conn (redis/create-pool))
 #'user/conn
 
