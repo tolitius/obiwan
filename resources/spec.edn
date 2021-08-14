@@ -1,0 +1,2732 @@
+{:acl-setuser
+ {:since "6.0.0",
+  :group "server",
+  :arguments
+  [{:name "username", :type "string"}
+   {:name "rule", :type "string", :multiple true, :optional true}],
+  :complexity "O(N). Where N is the number of rules provided.",
+  :summary "Modify or create the rules for a specific ACL user"},
+ :exists
+ {:since "1.0.0",
+  :group "generic",
+  :arguments [{:name "key", :type "key", :multiple true}],
+  :complexity "O(N) where N is the number of keys to check.",
+  :summary "Determine if a key exists"},
+ :role
+ {:since "2.8.12",
+  :group "server",
+  :summary
+  "Return the role of the instance in the context of replication"},
+ :acl-users
+ {:since "6.0.0",
+  :group "server",
+  :complexity "O(N). Where N is the number of configured users.",
+  :summary "List the username of all the configured ACL rules"},
+ :ping
+ {:since "1.0.0",
+  :group "connection",
+  :arguments [{:name "message", :type "string", :optional true}],
+  :summary "Ping the server"},
+ :del
+ {:since "1.0.0",
+  :group "generic",
+  :arguments [{:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(N) where N is the number of keys that will be removed. When a key to remove holds a value other than a string, the individual complexity for this key is O(M) where M is the number of elements in the list, set, sorted set or hash. Removing a single key that holds a string value is O(1).",
+  :summary "Delete a key"},
+ :zscan
+ {:since "2.8.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "cursor", :type "integer"}
+   {:name "pattern", :command "MATCH", :type "pattern", :optional true}
+   {:name "count", :command "COUNT", :type "integer", :optional true}],
+  :complexity
+  "O(1) for every call. O(N) for a complete iteration, including enough command calls for the cursor to return back to 0. N is the number of elements inside the collection..",
+  :summary
+  "Incrementally iterate sorted sets elements and associated scores"},
+ :zremrangebyrank
+ {:since "2.0.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "start", :type "integer"}
+   {:name "stop", :type "integer"}],
+  :complexity
+  "O(log(N)+M) with N being the number of elements in the sorted set and M the number of elements removed by the operation.",
+  :summary
+  "Remove all members in a sorted set within the given indexes"},
+ :lpushx
+ {:since "2.2.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "element", :type "string", :multiple true}],
+  :complexity
+  "O(1) for each element added, so O(N) to add N elements when the command is called with multiple arguments.",
+  :summary "Prepend an element to a list, only if the list exists"},
+ :command-info
+ {:since "2.8.13",
+  :group "server",
+  :arguments [{:name "command-name", :type "string", :multiple true}],
+  :complexity "O(N) when N is number of commands to look up",
+  :summary "Get array of specific Redis command details"},
+ :failover
+ {:since "6.2.0",
+  :group "server",
+  :arguments
+  [{:block
+    [{:command "TO"}
+     {:name "host", :type "string"}
+     {:name "port", :type "integer"}
+     {:command "FORCE", :optional true}],
+    :name "target",
+    :type "block",
+    :optional true}
+   {:command "ABORT", :optional true}
+   {:name "milliseconds",
+    :command "TIMEOUT",
+    :type "integer",
+    :optional true}],
+  :summary
+  "Start a coordinated failover between this server and one of its replicas."},
+ :latency-help
+ {:since "2.8.13",
+  :group "server",
+  :summary "Show helpful text about the different subcommands."},
+ :mget
+ {:since "1.0.0",
+  :group "string",
+  :arguments [{:name "key", :type "key", :multiple true}],
+  :complexity "O(N) where N is the number of keys to retrieve.",
+  :summary "Get the values of all the given keys"},
+ :bitcount
+ {:since "2.6.0",
+  :group "bitmap",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name ["start" "end"],
+    :type ["integer" "integer"],
+    :optional true}],
+  :complexity "O(N)",
+  :summary "Count set bits in a string"},
+ :geoadd
+ {:since "3.2.0",
+  :group "geo",
+  :arguments
+  [{:name "key", :type "key"}
+   {:enum ["NX" "XX"], :name "condition", :type "enum", :optional true}
+   {:enum ["CH"], :name "change", :type "enum", :optional true}
+   {:name ["longitude" "latitude" "member"],
+    :type ["double" "double" "string"],
+    :multiple true}],
+  :complexity
+  "O(log(N)) for each item added, where N is the number of elements in the sorted set.",
+  :summary
+  "Add one or more geospatial items in the geospatial index represented using a sorted set"},
+ :client-getredir
+ {:since "6.0.0",
+  :group "connection",
+  :complexity "O(1)",
+  :summary "Get tracking notifications redirection client ID if any"},
+ :geopos
+ {:since "3.2.0",
+  :group "geo",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "member", :type "string", :multiple true}],
+  :complexity "O(N) where N is the number of members requested.",
+  :summary
+  "Returns longitude and latitude of members of a geospatial index"},
+ :getex
+ {:since "6.2.0",
+  :group "string",
+  :arguments
+  [{:name "key", :type "key"}
+   {:enum
+    ["EX seconds"
+     "PX milliseconds"
+     "EXAT timestamp"
+     "PXAT milliseconds-timestamp"
+     "PERSIST"],
+    :name "expiration",
+    :type "enum",
+    :optional true}],
+  :complexity "O(1)",
+  :summary "Get the value of a key and optionally set its expiration"},
+ :client-setname
+ {:since "2.6.9",
+  :group "connection",
+  :arguments [{:name "connection-name", :type "string"}],
+  :complexity "O(1)",
+  :summary "Set the current connection name"},
+ :randomkey
+ {:since "1.0.0",
+  :group "generic",
+  :complexity "O(1)",
+  :summary "Return a random key from the keyspace"},
+ :zunionstore
+ {:since "2.0.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "destination", :type "key"}
+   {:name "numkeys", :type "integer"}
+   {:name "key", :type "key", :multiple true}
+   {:name "weight",
+    :variadic true,
+    :command "WEIGHTS",
+    :type "integer",
+    :optional true}
+   {:enum ["SUM" "MIN" "MAX"],
+    :name "aggregate",
+    :command "AGGREGATE",
+    :type "enum",
+    :optional true}],
+  :complexity
+  "O(N)+O(M log(M)) with N being the sum of the sizes of the input sorted sets, and M being the number of elements in the resulting sorted set.",
+  :summary
+  "Add multiple sorted sets and store the resulting sorted set in a new key"},
+ :get
+ {:since "1.0.0",
+  :group "string",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Get the value of a key"},
+ :ltrim
+ {:since "1.0.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "start", :type "integer"}
+   {:name "stop", :type "integer"}],
+  :complexity
+  "O(N) where N is the number of elements to be removed by the operation.",
+  :summary "Trim a list to the specified range"},
+ :copy
+ {:since "6.2.0",
+  :group "generic",
+  :arguments
+  [{:name "source", :type "key"}
+   {:name "destination", :type "key"}
+   {:name "destination-db",
+    :command "DB",
+    :type "integer",
+    :optional true}
+   {:enum ["REPLACE"], :name "replace", :type "enum", :optional true}],
+  :complexity
+  "O(N) worst case for collections, where N is the number of nested items. O(1) for string values.",
+  :summary "Copy a key"},
+ :unsubscribe
+ {:since "2.0.0",
+  :group "pubsub",
+  :arguments
+  [{:name "channel", :type "string", :multiple true, :optional true}],
+  :complexity
+  "O(N) where N is the number of clients already subscribed to a channel.",
+  :summary "Stop listening for messages posted to the given channels"},
+ :sunionstore
+ {:since "1.0.0",
+  :group "set",
+  :arguments
+  [{:name "destination", :type "key"}
+   {:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(N) where N is the total number of elements in all given sets.",
+  :summary "Add multiple sets and store the resulting set in a key"},
+ :cluster-replicas
+ {:since "5.0.0",
+  :group "cluster",
+  :arguments [{:name "node-id", :type "string"}],
+  :complexity "O(1)",
+  :summary "List replica nodes of the specified master node"},
+ :slaveof
+ {:since "1.0.0",
+  :group "server",
+  :arguments
+  [{:name "host", :type "string"} {:name "port", :type "string"}],
+  :summary
+  "Make the server a replica of another instance, or promote it as master. Deprecated starting with Redis 5. Use REPLICAOF instead."},
+ :expireat
+ {:since "1.2.0",
+  :group "generic",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "timestamp", :type "posix time"}
+   {:enum ["NX" "XX" "GT" "LT"],
+    :name "condition",
+    :type "enum",
+    :optional true}],
+  :complexity "O(1)",
+  :summary "Set the expiration for a key as a UNIX timestamp"},
+ :zdiff
+ {:since "6.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "numkeys", :type "integer"}
+   {:name "key", :type "key", :multiple true}
+   {:enum ["WITHSCORES"],
+    :name "withscores",
+    :type "enum",
+    :optional true}],
+  :complexity
+  "O(L + (N-K)log(N)) worst case where L is the total number of elements in all the sets, N is the size of the first set, and K is the size of the result set.",
+  :summary "Subtract multiple sorted sets"},
+ :client-pause
+ {:since "2.9.50",
+  :group "connection",
+  :arguments
+  [{:name "timeout", :type "integer"}
+   {:enum ["WRITE" "ALL"],
+    :name "mode",
+    :type "enum",
+    :optional true}],
+  :complexity "O(1)",
+  :summary "Stop processing commands from clients for some time"},
+ :latency-history
+ {:since "2.8.13",
+  :group "server",
+  :arguments [{:name "event", :type "string"}],
+  :summary "Return timestamp-latency samples for the event."},
+ :client-id
+ {:since "5.0.0",
+  :group "connection",
+  :complexity "O(1)",
+  :summary "Returns the client ID for the current connection"},
+ :zrevrank
+ {:since "2.0.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"} {:name "member", :type "string"}],
+  :complexity "O(log(N))",
+  :summary
+  "Determine the index of a member in a sorted set, with scores ordered from high to low"},
+ :cluster-meet
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments
+  [{:name "ip", :type "string"} {:name "port", :type "integer"}],
+  :complexity "O(1)",
+  :summary "Force a node cluster to handshake with another node"},
+ :smismember
+ {:since "6.2.0",
+  :group "set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "member", :type "string", :multiple true}],
+  :complexity
+  "O(N) where N is the number of elements being checked for membership",
+  :summary
+  "Returns the membership associated with the given elements for a set"},
+ :client-trackinginfo
+ {:since "6.2.0",
+  :group "connection",
+  :complexity "O(1)",
+  :summary
+  "Return information about server assisted client side caching for the current connection"},
+ :strlen
+ {:since "2.2.0",
+  :group "string",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Get the length of the value stored in a key"},
+ :acl-whoami
+ {:since "6.0.0",
+  :group "server",
+  :complexity "O(1)",
+  :summary
+  "Return the name of the user associated to the current connection"},
+ :script-debug
+ {:since "3.2.0",
+  :group "scripting",
+  :arguments [{:enum ["YES" "SYNC" "NO"], :name "mode", :type "enum"}],
+  :complexity "O(1)",
+  :summary "Set the debug mode for executed scripts."},
+ :acl-genpass
+ {:since "6.0.0",
+  :group "server",
+  :arguments [{:name "bits", :type "integer", :optional true}],
+  :complexity "O(1)",
+  :summary
+  "Generate a pseudorandom secure password to use for ACL users"},
+ :zpopmin
+ {:since "5.0.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "count", :type "integer", :optional true}],
+  :complexity
+  "O(log(N)*M) with N being the number of elements in the sorted set, and M being the number of elements popped.",
+  :summary
+  "Remove and return members with the lowest scores in a sorted set"},
+ :lrange
+ {:since "1.0.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "start", :type "integer"}
+   {:name "stop", :type "integer"}],
+  :complexity
+  "O(S+N) where S is the distance of start offset from HEAD for small lists, from nearest end (HEAD or TAIL) for large lists; and N is the number of elements in the specified range.",
+  :summary "Get a range of elements from a list"},
+ :hincrby
+ {:since "2.0.0",
+  :group "hash",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "field", :type "string"}
+   {:name "increment", :type "integer"}],
+  :complexity "O(1)",
+  :summary
+  "Increment the integer value of a hash field by the given number"},
+ :zrank
+ {:since "2.0.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"} {:name "member", :type "string"}],
+  :complexity "O(log(N))",
+  :summary "Determine the index of a member in a sorted set"},
+ :setrange
+ {:since "2.2.0",
+  :group "string",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "offset", :type "integer"}
+   {:name "value", :type "string"}],
+  :complexity
+  "O(1), not counting the time taken to copy the new string in place. Usually, this string is very small so the amortized complexity is O(1). Otherwise, complexity is O(M) with M being the length of the value argument.",
+  :summary
+  "Overwrite part of a string at key starting at the specified offset"},
+ :bzpopmin
+ {:since "5.0.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key", :multiple true}
+   {:name "timeout", :type "double"}],
+  :complexity
+  "O(log(N)) with N being the number of elements in the sorted set.",
+  :summary
+  "Remove and return the member with the lowest score from one or more sorted sets, or block until one is available"},
+ :sismember
+ {:since "1.0.0",
+  :group "set",
+  :arguments
+  [{:name "key", :type "key"} {:name "member", :type "string"}],
+  :complexity "O(1)",
+  :summary "Determine if a given value is a member of a set"},
+ :sinterstore
+ {:since "1.0.0",
+  :group "set",
+  :arguments
+  [{:name "destination", :type "key"}
+   {:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(N*M) worst case where N is the cardinality of the smallest set and M is the number of sets.",
+  :summary
+  "Intersect multiple sets and store the resulting set in a key"},
+ :flushall
+ {:since "1.0.0",
+  :group "server",
+  :arguments
+  [{:enum ["ASYNC" "SYNC"],
+    :name "async",
+    :type "enum",
+    :optional true}],
+  :complexity
+  "O(N) where N is the total number of keys in all databases",
+  :summary "Remove all keys from all databases"},
+ :script-exists
+ {:since "2.6.0",
+  :group "scripting",
+  :arguments [{:name "sha1", :type "string", :multiple true}],
+  :complexity
+  "O(N) with N being the number of scripts to check (so checking a single script is an O(1) operation).",
+  :summary "Check existence of scripts in the script cache."},
+ :hset
+ {:since "2.0.0",
+  :group "hash",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name ["field" "value"],
+    :type ["string" "string"],
+    :multiple true}],
+  :complexity
+  "O(1) for each field/value pair added, so O(N) to add N field/value pairs when the command is called with multiple field/value pairs.",
+  :summary "Set the string value of a hash field"},
+ :expiretime
+ {:since "7.0.0",
+  :group "generic",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Get the expiration Unix timestamp for a key"},
+ :pttl
+ {:since "2.6.0",
+  :group "generic",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Get the time to live for a key in milliseconds"},
+ :zincrby
+ {:since "1.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "increment", :type "integer"}
+   {:name "member", :type "string"}],
+  :complexity
+  "O(log(N)) where N is the number of elements in the sorted set.",
+  :summary "Increment the score of a member in a sorted set"},
+ :xdel
+ {:since "5.0.0",
+  :group "stream",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "ID", :type "string", :multiple true}],
+  :complexity
+  "O(1) for each single item to delete in the stream, regardless of the stream size.",
+  :summary
+  "Removes the specified entries from the stream. Returns the number of items actually deleted, that may be different from the number of IDs passed in case certain IDs do not exist."},
+ :zcard
+ {:since "1.2.0",
+  :group "sorted_set",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Get the number of members in a sorted set"},
+ :hvals
+ {:since "2.0.0",
+  :group "hash",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(N) where N is the size of the hash.",
+  :summary "Get all the values in a hash"},
+ :config-rewrite
+ {:since "2.8.0",
+  :group "server",
+  :summary
+  "Rewrite the configuration file with the in memory configuration"},
+ :command-count
+ {:since "2.8.13",
+  :group "server",
+  :complexity "O(1)",
+  :summary "Get total number of Redis commands"},
+ :blmove
+ {:since "6.2.0",
+  :group "list",
+  :arguments
+  [{:name "source", :type "key"}
+   {:name "destination", :type "key"}
+   {:enum ["LEFT" "RIGHT"], :name "wherefrom", :type "enum"}
+   {:enum ["LEFT" "RIGHT"], :name "whereto", :type "enum"}
+   {:name "timeout", :type "double"}],
+  :complexity "O(1)",
+  :summary
+  "Pop an element from a list, push it to another list and return it; or block until one is available"},
+ :incr
+ {:since "1.0.0",
+  :group "string",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Increment the integer value of a key by one"},
+ :linsert
+ {:since "2.2.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"}
+   {:enum ["BEFORE" "AFTER"], :name "where", :type "enum"}
+   {:name "pivot", :type "string"}
+   {:name "element", :type "string"}],
+  :complexity
+  "O(N) where N is the number of elements to traverse before seeing the value pivot. This means that inserting somewhere on the left end on the list (head) can be considered O(1) and inserting somewhere on the right end (tail) is O(N).",
+  :summary
+  "Insert an element before or after another element in a list"},
+ :reset
+ {:since "6.2", :group "connection", :summary "Reset the connection"},
+ :zintercard
+ {:since "7.0.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "numkeys", :type "integer"}
+   {:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(N*K) worst case with N being the smallest input sorted set, K being the number of input sorted sets.",
+  :summary
+  "Intersect multiple sorted sets and return the cardinality of the result"},
+ :latency-latest
+ {:since "2.8.13",
+  :group "server",
+  :summary "Return the latest latency samples for all events."},
+ :acl-save
+ {:since "6.0.0",
+  :group "server",
+  :complexity "O(N). Where N is the number of configured users.",
+  :summary "Save the current ACL rules in the configured ACL file"},
+ :rpushx
+ {:since "2.2.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "element", :type "string", :multiple true}],
+  :complexity
+  "O(1) for each element added, so O(N) to add N elements when the command is called with multiple arguments.",
+  :summary "Append an element to a list, only if the list exists"},
+ :pfcount
+ {:since "2.8.9",
+  :group "hyperloglog",
+  :arguments [{:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(1) with a very small average constant time when called with a single key. O(N) with N being the number of keys, and much bigger constant times, when called with multiple keys.",
+  :summary
+  "Return the approximated cardinality of the set(s) observed by the HyperLogLog at key(s)."},
+ :exec
+ {:since "1.2.0",
+  :group "transactions",
+  :summary "Execute all commands issued after MULTI"},
+ :zrangebylex
+ {:since "2.8.9",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "min", :type "string"}
+   {:name "max", :type "string"}
+   {:name ["offset" "count"],
+    :command "LIMIT",
+    :type ["integer" "integer"],
+    :optional true}],
+  :complexity
+  "O(log(N)+M) with N being the number of elements in the sorted set and M the number of elements being returned. If M is constant (e.g. always asking for the first 10 elements with LIMIT), you can consider it O(log(N)).",
+  :summary
+  "Return a range of members in a sorted set, by lexicographical range"},
+ :acl-load
+ {:since "6.0.0",
+  :group "server",
+  :complexity "O(N). Where N is the number of configured users.",
+  :summary "Reload the ACLs from the configured ACL file"},
+ :memory-malloc-stats
+ {:since "4.0.0",
+  :group "server",
+  :summary "Show allocator internal stats"},
+ :psubscribe
+ {:since "2.0.0",
+  :group "pubsub",
+  :arguments [{:name ["pattern"], :type ["pattern"], :multiple true}],
+  :complexity
+  "O(N) where N is the number of patterns the client is already subscribed to.",
+  :summary
+  "Listen for messages published to channels matching the given patterns"},
+ :geohash
+ {:since "3.2.0",
+  :group "geo",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "member", :type "string", :multiple true}],
+  :complexity
+  "O(log(N)) for each member requested, where N is the number of elements in the sorted set.",
+  :summary
+  "Returns members of a geospatial index as standard geohash strings"},
+ :module-list
+ {:since "4.0.0",
+  :group "server",
+  :complexity "O(N) where N is the number of loaded modules.",
+  :summary "List all modules loaded by the server"},
+ :sadd
+ {:since "1.0.0",
+  :group "set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "member", :type "string", :multiple true}],
+  :complexity
+  "O(1) for each element added, so O(N) to add N elements when the command is called with multiple arguments.",
+  :summary "Add one or more members to a set"},
+ :restore
+ {:since "2.6.0",
+  :group "generic",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "ttl", :type "integer"}
+   {:name "serialized-value", :type "string"}
+   {:enum ["REPLACE"], :name "replace", :type "enum", :optional true}
+   {:enum ["ABSTTL"], :name "absttl", :type "enum", :optional true}
+   {:name "seconds",
+    :command "IDLETIME",
+    :type "integer",
+    :optional true}
+   {:name "frequency",
+    :command "FREQ",
+    :type "integer",
+    :optional true}],
+  :complexity
+  "O(1) to create the new key and additional O(N*M) to reconstruct the serialized value, where N is the number of Redis objects composing the value and M their average size. For small string values the time complexity is thus O(1)+O(1*M) where M is small, so simply O(1). However for sorted set values the complexity is O(N*M*log(N)) because inserting values into sorted sets is O(log(N)).",
+  :summary
+  "Create a key using the provided serialized value, previously obtained using DUMP."},
+ :geodist
+ {:since "3.2.0",
+  :group "geo",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "member1", :type "string"}
+   {:name "member2", :type "string"}
+   {:enum ["m" "km" "ft" "mi"],
+    :name "unit",
+    :type "enum",
+    :optional true}],
+  :complexity "O(log(N))",
+  :summary
+  "Returns the distance between two members of a geospatial index"},
+ :zadd
+ {:since "1.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:enum ["NX" "XX"], :name "condition", :type "enum", :optional true}
+   {:enum ["GT" "LT"],
+    :name "comparison",
+    :type "enum",
+    :optional true}
+   {:enum ["CH"], :name "change", :type "enum", :optional true}
+   {:enum ["INCR"], :name "increment", :type "enum", :optional true}
+   {:name ["score" "member"],
+    :type ["double" "string"],
+    :multiple true}],
+  :complexity
+  "O(log(N)) for each item added, where N is the number of elements in the sorted set.",
+  :summary
+  "Add one or more members to a sorted set, or update its score if it already exists"},
+ :scard
+ {:since "1.0.0",
+  :group "set",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Get the number of members in a set"},
+ :acl-getuser
+ {:since "6.0.0",
+  :group "server",
+  :arguments [{:name "username", :type "string"}],
+  :complexity
+  "O(N). Where N is the number of password, command and pattern rules that the user has.",
+  :summary "Get the rules for a specific ACL user"},
+ :client-info
+ {:since "6.2.0",
+  :group "connection",
+  :complexity "O(1)",
+  :summary "Returns information about the current client connection."},
+ :eval_ro
+ {:since "7.0.0",
+  :group "scripting",
+  :arguments
+  [{:name "script", :type "string"}
+   {:name "numkeys", :type "integer"}
+   {:name "key", :type "key", :multiple true}
+   {:name "arg", :type "string", :multiple true}],
+  :complexity "Depends on the script that is executed.",
+  :summary "Execute a read-only Lua script server side"},
+ :hscan
+ {:since "2.8.0",
+  :group "hash",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "cursor", :type "integer"}
+   {:name "pattern", :command "MATCH", :type "pattern", :optional true}
+   {:name "count", :command "COUNT", :type "integer", :optional true}],
+  :complexity
+  "O(1) for every call. O(N) for a complete iteration, including enough command calls for the cursor to return back to 0. N is the number of elements inside the collection..",
+  :summary "Incrementally iterate hash fields and associated values"},
+ :lolwut
+ {:since "5.0.0",
+  :group "server",
+  :arguments
+  [{:name "version",
+    :command "VERSION",
+    :type "integer",
+    :optional true}],
+  :summary "Display some computer art and the Redis version"},
+ :zcount
+ {:since "2.0.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "min", :type "double"}
+   {:name "max", :type "double"}],
+  :complexity
+  "O(log(N)) with N being the number of elements in the sorted set.",
+  :summary
+  "Count the members in a sorted set with scores within the given values"},
+ :migrate
+ {:since "2.6.0",
+  :group "generic",
+  :arguments
+  [{:name "host", :type "string"}
+   {:name "port", :type "string"}
+   {:enum ["key" "\"\""], :name "key", :type "enum"}
+   {:name "destination-db", :type "integer"}
+   {:name "timeout", :type "integer"}
+   {:enum ["COPY"], :name "copy", :type "enum", :optional true}
+   {:enum ["REPLACE"], :name "replace", :type "enum", :optional true}
+   {:name "password", :command "AUTH", :type "string", :optional true}
+   {:name "username password",
+    :command "AUTH2",
+    :type "string",
+    :optional true}
+   {:name "key",
+    :variadic true,
+    :command "KEYS",
+    :type "key",
+    :optional true}],
+  :complexity
+  "This command actually executes a DUMP+DEL in the source instance, and a RESTORE in the target instance. See the pages of these commands for time complexity. Also an O(N) data transfer between the two instances is performed.",
+  :summary
+  "Atomically transfer a key from a Redis instance to another one."},
+ :command-getkeys
+ {:since "2.8.13",
+  :group "server",
+  :complexity "O(N) where N is the number of arguments to the command",
+  :summary "Extract keys given a full Redis command"},
+ :readonly
+ {:since "3.0.0",
+  :group "cluster",
+  :complexity "O(1)",
+  :summary
+  "Enables read queries for a connection to a cluster replica node"},
+ :time
+ {:since "2.6.0",
+  :group "server",
+  :complexity "O(1)",
+  :summary "Return the current server time"},
+ :geosearchstore
+ {:since "6.2",
+  :group "geo",
+  :arguments
+  [{:name "destination", :type "key"}
+   {:name "source", :type "key"}
+   {:name "member",
+    :command "FROMMEMBER",
+    :type "string",
+    :optional true}
+   {:name ["longitude" "latitude"],
+    :command "FROMLONLAT",
+    :type ["double" "double"],
+    :optional true}
+   {:block
+    [{:name "radius", :command "BYRADIUS", :type "double"}
+     {:enum ["m" "km" "ft" "mi"], :name "unit", :type "enum"}],
+    :name "circle",
+    :type "block",
+    :optional true}
+   {:block
+    [{:name "width", :command "BYBOX", :type "double"}
+     {:name "height", :type "double"}
+     {:enum ["m" "km" "ft" "mi"], :name "unit", :type "enum"}],
+    :name "box",
+    :type "block",
+    :optional true}
+   {:enum ["ASC" "DESC"], :name "order", :type "enum", :optional true}
+   {:block
+    [{:name "count", :command "COUNT", :type "integer"}
+     {:enum ["ANY"], :name "any", :type "enum", :optional true}],
+    :name "count",
+    :type "block",
+    :optional true}
+   {:enum ["STOREDIST"],
+    :name "storedist",
+    :type "enum",
+    :optional true}],
+  :complexity
+  "O(N+log(M)) where N is the number of elements in the grid-aligned bounding box area around the shape provided as the filter and M is the number of items inside the shape",
+  :summary
+  "Query a sorted set representing a geospatial index to fetch members inside an area of a box or a circle, and store the result in another key."},
+ :acl-deluser
+ {:since "6.0.0",
+  :group "server",
+  :arguments [{:name "username", :type "string", :multiple true}],
+  :complexity "O(1) amortized time considering the typical user.",
+  :summary "Remove the specified ACL users and the associated rules"},
+ :sintercard
+ {:since "7.0.0",
+  :group "set",
+  :arguments [{:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(N*M) worst case where N is the cardinality of the smallest set and M is the number of sets.",
+  :summary
+  "Intersect multiple sets and return the cardinality of the result"},
+ :hget
+ {:since "2.0.0",
+  :group "hash",
+  :arguments
+  [{:name "key", :type "key"} {:name "field", :type "string"}],
+  :complexity "O(1)",
+  :summary "Get the value of a hash field"},
+ :memory-doctor
+ {:since "4.0.0",
+  :group "server",
+  :summary "Outputs memory problems report"},
+ :append
+ {:since "2.0.0",
+  :group "string",
+  :arguments
+  [{:name "key", :type "key"} {:name "value", :type "string"}],
+  :complexity
+  "O(1). The amortized time complexity is O(1) assuming the appended value is small and the already present value is of any size, since the dynamic string library used by Redis will double the free space available on every reallocation.",
+  :summary "Append a value to a key"},
+ :script-flush
+ {:since "2.6.0",
+  :group "scripting",
+  :arguments
+  [{:enum ["ASYNC" "SYNC"],
+    :name "async",
+    :type "enum",
+    :optional true}],
+  :complexity "O(N) with N being the number of scripts in cache",
+  :summary "Remove all the scripts from the script cache."},
+ :hello
+ {:since "6.0.0",
+  :group "connection",
+  :arguments
+  [{:block
+    [{:name "protover", :type "integer"}
+     {:name ["username" "password"],
+      :command "AUTH",
+      :type ["string" "string"],
+      :optional true}
+     {:name "clientname",
+      :command "SETNAME",
+      :type "string",
+      :optional true}],
+    :name "arguments",
+    :type "block",
+    :optional true}],
+  :complexity "O(1)",
+  :summary "Handshake with Redis"},
+ :client-list
+ {:since "2.4.0",
+  :group "connection",
+  :arguments
+  [{:enum ["normal" "master" "replica" "pubsub"],
+    :command "TYPE",
+    :type "enum",
+    :optional true}
+   {:block
+    [{:command "ID"}
+     {:name "client-id", :type "integer", :multiple true}],
+    :name "id",
+    :type "block",
+    :optional true}],
+  :complexity "O(N) where N is the number of client connections",
+  :summary "Get the list of client connections"},
+ :acl-cat
+ {:since "6.0.0",
+  :group "server",
+  :arguments [{:name "categoryname", :type "string", :optional true}],
+  :complexity
+  "O(1) since the categories and commands are a fixed set.",
+  :summary
+  "List the ACL categories or the commands inside a category"},
+ :move
+ {:since "1.0.0",
+  :group "generic",
+  :arguments
+  [{:name "key", :type "key"} {:name "db", :type "integer"}],
+  :complexity "O(1)",
+  :summary "Move a key to another database"},
+ :hexists
+ {:since "2.0.0",
+  :group "hash",
+  :arguments
+  [{:name "key", :type "key"} {:name "field", :type "string"}],
+  :complexity "O(1)",
+  :summary "Determine if a hash field exists"},
+ :renamenx
+ {:since "1.0.0",
+  :group "generic",
+  :arguments
+  [{:name "key", :type "key"} {:name "newkey", :type "key"}],
+  :complexity "O(1)",
+  :summary "Rename a key, only if the new key does not exist"},
+ :lpos
+ {:since "6.0.6",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "element", :type "string"}
+   {:name "rank", :command "RANK", :type "integer", :optional true}
+   {:name "num-matches",
+    :command "COUNT",
+    :type "integer",
+    :optional true}
+   {:name "len", :command "MAXLEN", :type "integer", :optional true}],
+  :complexity
+  "O(N) where N is the number of elements in the list, for the average case. When searching for elements near the head or the tail of the list, or when the MAXLEN option is provided, the command may run in constant time.",
+  :summary "Return the index of matching elements on a list"},
+ :hmget
+ {:since "2.0.0",
+  :group "hash",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "field", :type "string", :multiple true}],
+  :complexity "O(N) where N is the number of fields being requested.",
+  :summary "Get the values of all the given hash fields"},
+ :lset
+ {:since "1.0.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "index", :type "integer"}
+   {:name "element", :type "string"}],
+  :complexity
+  "O(N) where N is the length of the list. Setting either the first or the last element of the list is O(1).",
+  :summary "Set the value of an element in a list by its index"},
+ :client-caching
+ {:since "6.0.0",
+  :group "connection",
+  :arguments [{:enum ["YES" "NO"], :name "mode", :type "enum"}],
+  :complexity "O(1)",
+  :summary
+  "Instruct the server about tracking or not keys in the next request"},
+ :lindex
+ {:since "1.0.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"} {:name "index", :type "integer"}],
+  :complexity
+  "O(N) where N is the number of elements to traverse to get to the element at index. This makes asking for the first or the last element of the list O(1).",
+  :summary "Get an element from a list by its index"},
+ :debug-object
+ {:since "1.0.0",
+  :group "server",
+  :arguments [{:name "key", :type "key"}],
+  :summary "Get debugging information about a key"},
+ :command
+ {:since "2.8.13",
+  :group "server",
+  :complexity "O(N) where N is the total number of Redis commands",
+  :summary "Get array of Redis command details"},
+ :persist
+ {:since "2.2.0",
+  :group "generic",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Remove the expiration from a key"},
+ :getset
+ {:since "1.0.0",
+  :group "string",
+  :arguments
+  [{:name "key", :type "key"} {:name "value", :type "string"}],
+  :complexity "O(1)",
+  :summary "Set the string value of a key and return its old value"},
+ :swapdb
+ {:since "4.0.0",
+  :group "server",
+  :arguments
+  [{:name "index1", :type "integer"}
+   {:name "index2", :type "integer"}],
+  :complexity
+  "O(N) where N is the count of clients watching or blocking on keys from both databases.",
+  :summary "Swaps two Redis databases"},
+ :zrem
+ {:since "1.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "member", :type "string", :multiple true}],
+  :complexity
+  "O(M*log(N)) with N being the number of elements in the sorted set and M the number of elements to be removed.",
+  :summary "Remove one or more members from a sorted set"},
+ :type
+ {:since "1.0.0",
+  :group "generic",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Determine the type stored at key"},
+ :xautoclaim
+ {:since "6.2.0",
+  :group "stream",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "group", :type "string"}
+   {:name "consumer", :type "string"}
+   {:name "min-idle-time", :type "string"}
+   {:name "start", :type "string"}
+   {:name "count", :command "COUNT", :type "integer", :optional true}
+   {:enum ["JUSTID"], :name "justid", :optional true}],
+  :complexity "O(1) if COUNT is small.",
+  :summary
+  "Changes (or acquires) ownership of messages in a consumer group, as if the messages were delivered to the specified consumer."},
+ :setnx
+ {:since "1.0.0",
+  :group "string",
+  :arguments
+  [{:name "key", :type "key"} {:name "value", :type "string"}],
+  :complexity "O(1)",
+  :summary "Set the value of a key, only if the key does not exist"},
+ :cluster-getkeysinslot
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments
+  [{:name "slot", :type "integer"} {:name "count", :type "integer"}],
+  :complexity "O(log(N)) where N is the number of requested keys",
+  :summary "Return local key names in the specified hash slot"},
+ :expire
+ {:since "1.0.0",
+  :group "generic",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "seconds", :type "integer"}
+   {:enum ["NX" "XX" "GT" "LT"],
+    :name "condition",
+    :type "enum",
+    :optional true}],
+  :complexity "O(1)",
+  :summary "Set a key's time to live in seconds"},
+ :srandmember
+ {:since "1.0.0",
+  :group "set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "count", :type "integer", :optional true}],
+  :complexity
+  "Without the count argument O(1), otherwise O(N) where N is the absolute value of the passed count.",
+  :summary "Get one or multiple random members from a set"},
+ :rename
+ {:since "1.0.0",
+  :group "generic",
+  :arguments
+  [{:name "key", :type "key"} {:name "newkey", :type "key"}],
+  :complexity "O(1)",
+  :summary "Rename a key"},
+ :georadiusbymember
+ {:since "3.2.0",
+  :group "geo",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "member", :type "string"}
+   {:name "radius", :type "double"}
+   {:enum ["m" "km" "ft" "mi"], :name "unit", :type "enum"}
+   {:enum ["WITHCOORD"],
+    :name "withcoord",
+    :type "enum",
+    :optional true}
+   {:enum ["WITHDIST"], :name "withdist", :type "enum", :optional true}
+   {:enum ["WITHHASH"], :name "withhash", :type "enum", :optional true}
+   {:block
+    [{:name "count", :command "COUNT", :type "integer"}
+     {:enum ["ANY"], :name "any", :type "enum", :optional true}],
+    :name "count",
+    :type "block",
+    :optional true}
+   {:enum ["ASC" "DESC"], :name "order", :type "enum", :optional true}
+   {:name "key", :command "STORE", :type "key", :optional true}
+   {:name "key", :command "STOREDIST", :type "key", :optional true}],
+  :complexity
+  "O(N+log(M)) where N is the number of elements inside the bounding box of the circular area delimited by center and radius and M is the number of items inside the index.",
+  :summary
+  "Query a sorted set representing a geospatial index to fetch members matching a given maximum distance from a member"},
+ :stralgo
+ {:since "6.0.0",
+  :group "string",
+  :arguments
+  [{:enum ["LCS"], :name "algorithm", :type "enum"}
+   {:name "algo-specific-argument", :type "string", :multiple true}],
+  :complexity "For LCS O(strlen(s1)*strlen(s2))",
+  :summary "Run algorithms (currently LCS) against strings"},
+ :unwatch
+ {:since "2.2.0",
+  :group "transactions",
+  :complexity "O(1)",
+  :summary "Forget about all watched keys"},
+ :dbsize
+ {:since "1.0.0",
+  :group "server",
+  :summary "Return the number of keys in the selected database"},
+ :pfadd
+ {:since "2.8.9",
+  :group "hyperloglog",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "element", :type "string", :multiple true, :optional true}],
+  :complexity "O(1) to add every element.",
+  :summary
+  "Adds the specified elements to the specified HyperLogLog."},
+ :bgsave
+ {:since "1.0.0",
+  :group "server",
+  :arguments
+  [{:enum ["SCHEDULE"],
+    :name "schedule",
+    :type "enum",
+    :optional true}],
+  :summary "Asynchronously save the dataset to disk"},
+ :save
+ {:since "1.0.0",
+  :group "server",
+  :summary "Synchronously save the dataset to disk"},
+ :replicaof
+ {:since "5.0.0",
+  :group "server",
+  :arguments
+  [{:name "host", :type "string"} {:name "port", :type "string"}],
+  :summary
+  "Make the server a replica of another instance, or promote it as master."},
+ :smembers
+ {:since "1.0.0",
+  :group "set",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(N) where N is the set cardinality.",
+  :summary "Get all the members in a set"},
+ :bitpos
+ {:since "2.8.7",
+  :group "bitmap",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "bit", :type "integer"}
+   {:block
+    [{:name "start", :type "integer"}
+     {:name "end", :type "integer", :optional true}],
+    :name "index",
+    :type "block",
+    :optional true}],
+  :complexity "O(N)",
+  :summary "Find first bit set or clear in a string"},
+ :client-unpause
+ {:since "6.2.0",
+  :group "connection",
+  :complexity "O(N) Where N is the number of paused clients",
+  :summary "Resume processing of clients that were paused"},
+ :hincrbyfloat
+ {:since "2.6.0",
+  :group "hash",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "field", :type "string"}
+   {:name "increment", :type "double"}],
+  :complexity "O(1)",
+  :summary
+  "Increment the float value of a hash field by the given amount"},
+ :bitop
+ {:since "2.6.0",
+  :group "bitmap",
+  :arguments
+  [{:name "operation", :type "string"}
+   {:name "destkey", :type "key"}
+   {:name "key", :type "key", :multiple true}],
+  :complexity "O(N)",
+  :summary "Perform bitwise operations between strings"},
+ :client-tracking
+ {:since "6.0.0",
+  :group "connection",
+  :arguments
+  [{:enum ["ON" "OFF"], :name "status", :type "enum"}
+   {:name "client-id",
+    :command "REDIRECT",
+    :type "integer",
+    :optional true}
+   {:name "prefix",
+    :command "PREFIX",
+    :type "string",
+    :multiple true,
+    :optional true}
+   {:enum ["BCAST"], :name "BCAST", :type "enum", :optional true}
+   {:enum ["OPTIN"], :name "OPTIN", :type "enum", :optional true}
+   {:enum ["OPTOUT"], :name "OPTOUT", :type "enum", :optional true}
+   {:enum ["NOLOOP"], :name "NOLOOP", :type "enum", :optional true}],
+  :complexity
+  "O(1). Some options may introduce additional complexity.",
+  :summary
+  "Enable or disable server assisted client side caching support"},
+ :cluster-count-failure-reports
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments [{:name "node-id", :type "string"}],
+  :complexity "O(N) where N is the number of failure reports",
+  :summary
+  "Return the number of failure reports active for a given node"},
+ :sync
+ {:since "1.0.0",
+  :group "server",
+  :summary "Internal command used for replication"},
+ :auth
+ {:since "1.0.0",
+  :group "connection",
+  :arguments
+  [{:name "username", :type "string", :optional true}
+   {:name "password", :type "string"}],
+  :summary "Authenticate to the server"},
+ :xpending
+ {:since "5.0.0",
+  :group "stream",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "group", :type "string"}
+   {:block
+    [{:name "min-idle-time",
+      :command "IDLE",
+      :type "integer",
+      :optional true}
+     {:name "start", :type "string"}
+     {:name "end", :type "string"}
+     {:name "count", :type "integer"}
+     {:name "consumer", :type "string", :optional true}],
+    :name "filters",
+    :type "block",
+    :optional true}],
+  :complexity
+  "O(N) with N being the number of elements returned, so asking for a small fixed number of entries per call is O(1). O(M), where M is the total number of entries scanned when used with the IDLE filter. When the command returns just the summary and the list of consumers is small, it runs in O(1) time; otherwise, an additional O(N) time for iterating every consumer.",
+  :summary
+  "Return information and entries from a stream consumer group pending entries list, that are messages fetched but never acknowledged."},
+ :srem
+ {:since "1.0.0",
+  :group "set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "member", :type "string", :multiple true}],
+  :complexity "O(N) where N is the number of members to be removed.",
+  :summary "Remove one or more members from a set"},
+ :xadd
+ {:since "5.0.0",
+  :group "stream",
+  :arguments
+  [{:name "key", :type "key"}
+   {:command "NOMKSTREAM", :optional true}
+   {:block
+    [{:enum ["MAXLEN" "MINID"], :name "strategy", :type "enum"}
+     {:enum ["=" "~"], :name "operator", :type "enum", :optional true}
+     {:name "threshold", :type "string"}
+     {:name "count",
+      :command "LIMIT",
+      :type "integer",
+      :optional true}],
+    :name "trim",
+    :type "block",
+    :optional true}
+   {:enum ["*" "ID"], :type "enum"}
+   {:name ["field" "value"],
+    :type ["string" "string"],
+    :multiple true}],
+  :complexity
+  "O(1) when adding a new entry, O(N) when trimming where N being the number of entires evicted.",
+  :summary "Appends a new entry to a stream"},
+ :script-load
+ {:since "2.6.0",
+  :group "scripting",
+  :arguments [{:name "script", :type "string"}],
+  :complexity
+  "O(N) with N being the length in bytes of the script body.",
+  :summary "Load the specified Lua script into the script cache."},
+ :config-get
+ {:since "2.0.0",
+  :group "server",
+  :arguments [{:name "parameter", :type "string"}],
+  :summary "Get the value of a configuration parameter"},
+ :zremrangebylex
+ {:since "2.8.9",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "min", :type "string"}
+   {:name "max", :type "string"}],
+  :complexity
+  "O(log(N)+M) with N being the number of elements in the sorted set and M the number of elements removed by the operation.",
+  :summary
+  "Remove all members in a sorted set between the given lexicographical range"},
+ :hkeys
+ {:since "2.0.0",
+  :group "hash",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(N) where N is the size of the hash.",
+  :summary "Get all the fields in a hash"},
+ :evalsha_ro
+ {:since "7.0.0",
+  :group "scripting",
+  :arguments
+  [{:name "sha1", :type "string"}
+   {:name "numkeys", :type "integer"}
+   {:name "key", :type "key", :multiple true}
+   {:name "arg", :type "string", :multiple true}],
+  :complexity "Depends on the script that is executed.",
+  :summary "Execute a read-only Lua script server side"},
+ :zrandmember
+ {:since "6.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:block
+    [{:name "count", :type "integer"}
+     {:enum ["WITHSCORES"],
+      :name "withscores",
+      :type "enum",
+      :optional true}],
+    :name "options",
+    :type "block",
+    :optional true}],
+  :complexity "O(N) where N is the number of elements returned",
+  :summary "Get one or multiple random elements from a sorted set"},
+ :latency-reset
+ {:since "2.8.13",
+  :group "server",
+  :arguments
+  [{:name "event", :type "string", :multiple true, :optional true}],
+  :summary "Reset latency data for one or more events."},
+ :xrevrange
+ {:since "5.0.0",
+  :group "stream",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "end", :type "string"}
+   {:name "start", :type "string"}
+   {:name "count", :command "COUNT", :type "integer", :optional true}],
+  :complexity
+  "O(N) with N being the number of elements returned. If N is constant (e.g. always asking for the first 10 elements with COUNT), you can consider it O(1).",
+  :summary
+  "Return a range of elements in a stream, with IDs matching the specified IDs interval, in reverse order (from greater to smaller IDs) compared to XRANGE"},
+ :acl-log
+ {:since "6.0.0",
+  :group "server",
+  :arguments
+  [{:name "count or RESET", :type "string", :optional true}],
+  :complexity "O(N) with N being the number of entries shown.",
+  :summary "List latest events denied because of ACLs in place"},
+ :acl-list
+ {:since "6.0.0",
+  :group "server",
+  :complexity "O(N). Where N is the number of configured users.",
+  :summary "List the current ACL rules in ACL config file format"},
+ :cluster-info
+ {:since "3.0.0",
+  :group "cluster",
+  :complexity "O(1)",
+  :summary "Provides info about Redis Cluster node state"},
+ :xclaim
+ {:since "5.0.0",
+  :group "stream",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "group", :type "string"}
+   {:name "consumer", :type "string"}
+   {:name "min-idle-time", :type "string"}
+   {:name "ID", :type "string", :multiple true}
+   {:name "ms", :command "IDLE", :type "integer", :optional true}
+   {:name "ms-unix-time",
+    :command "TIME",
+    :type "integer",
+    :optional true}
+   {:name "count",
+    :command "RETRYCOUNT",
+    :type "integer",
+    :optional true}
+   {:enum ["FORCE"], :name "force", :optional true}
+   {:enum ["JUSTID"], :name "justid", :optional true}],
+  :complexity
+  "O(log N) with N being the number of messages in the PEL of the consumer group.",
+  :summary
+  "Changes (or acquires) ownership of a message in a consumer group, as if the message was delivered to the specified consumer."},
+ :zlexcount
+ {:since "2.8.9",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "min", :type "string"}
+   {:name "max", :type "string"}],
+  :complexity
+  "O(log(N)) with N being the number of elements in the sorted set.",
+  :summary
+  "Count the number of members in a sorted set between a given lexicographical range"},
+ :incrbyfloat
+ {:since "2.6.0",
+  :group "string",
+  :arguments
+  [{:name "key", :type "key"} {:name "increment", :type "double"}],
+  :complexity "O(1)",
+  :summary "Increment the float value of a key by the given amount"},
+ :rpush
+ {:since "1.0.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "element", :type "string", :multiple true}],
+  :complexity
+  "O(1) for each element added, so O(N) to add N elements when the command is called with multiple arguments.",
+  :summary "Append one or multiple elements to a list"},
+ :xreadgroup
+ {:since "5.0.0",
+  :group "stream",
+  :arguments
+  [{:name ["group" "consumer"],
+    :command "GROUP",
+    :type ["string" "string"]}
+   {:name "count", :command "COUNT", :type "integer", :optional true}
+   {:name "milliseconds",
+    :command "BLOCK",
+    :type "integer",
+    :optional true}
+   {:enum ["NOACK"], :name "noack", :type "enum", :optional true}
+   {:enum ["STREAMS"], :name "streams", :type "enum"}
+   {:name "key", :type "key", :multiple true}
+   {:name "ID", :type "string", :multiple true}],
+  :complexity
+  "For each stream mentioned: O(M) with M being the number of elements returned. If M is constant (e.g. always asking for the first 10 elements with COUNT), you can consider it O(1). On the other side when XREADGROUP blocks, XADD will pay the O(N) time in order to serve the N clients blocked on the stream getting new data.",
+  :summary
+  "Return new entries from a stream using a consumer group, or access the history of the pending entries for a given consumer. Can block."},
+ :sinter
+ {:since "1.0.0",
+  :group "set",
+  :arguments [{:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(N*M) worst case where N is the cardinality of the smallest set and M is the number of sets.",
+  :summary "Intersect multiple sets"},
+ :sunion
+ {:since "1.0.0",
+  :group "set",
+  :arguments [{:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(N) where N is the total number of elements in all given sets.",
+  :summary "Add multiple sets"},
+ :echo
+ {:since "1.0.0",
+  :group "connection",
+  :arguments [{:name "message", :type "string"}],
+  :summary "Echo the given string"},
+ :llen
+ {:since "1.0.0",
+  :group "list",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Get the length of a list"},
+ :client-unblock
+ {:since "5.0.0",
+  :group "connection",
+  :arguments
+  [{:name "client-id", :type "integer"}
+   {:enum ["TIMEOUT" "ERROR"],
+    :name "unblock-type",
+    :type "enum",
+    :optional true}],
+  :complexity "O(log N) where N is the number of client connections",
+  :summary
+  "Unblock a client blocked in a blocking command from a different connection"},
+ :pexpire
+ {:since "2.6.0",
+  :group "generic",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "milliseconds", :type "integer"}
+   {:enum ["NX" "XX" "GT" "LT"],
+    :name "condition",
+    :type "enum",
+    :optional true}],
+  :complexity "O(1)",
+  :summary "Set a key's time to live in milliseconds"},
+ :module-load
+ {:since "4.0.0",
+  :group "server",
+  :arguments
+  [{:name "path", :type "string"}
+   {:name "arg", :variadic true, :type "string", :optional true}],
+  :complexity "O(1)",
+  :summary "Load a module"},
+ :ttl
+ {:since "1.0.0",
+  :group "generic",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Get the time to live for a key in seconds"},
+ :geosearch
+ {:since "6.2",
+  :group "geo",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "member",
+    :command "FROMMEMBER",
+    :type "string",
+    :optional true}
+   {:name ["longitude" "latitude"],
+    :command "FROMLONLAT",
+    :type ["double" "double"],
+    :optional true}
+   {:block
+    [{:name "radius", :command "BYRADIUS", :type "double"}
+     {:enum ["m" "km" "ft" "mi"], :name "unit", :type "enum"}],
+    :name "circle",
+    :type "block",
+    :optional true}
+   {:block
+    [{:name "width", :command "BYBOX", :type "double"}
+     {:name "height", :type "double"}
+     {:enum ["m" "km" "ft" "mi"], :name "unit", :type "enum"}],
+    :name "box",
+    :type "block",
+    :optional true}
+   {:enum ["ASC" "DESC"], :name "order", :type "enum", :optional true}
+   {:block
+    [{:name "count", :command "COUNT", :type "integer"}
+     {:enum ["ANY"], :name "any", :type "enum", :optional true}],
+    :name "count",
+    :type "block",
+    :optional true}
+   {:enum ["WITHCOORD"],
+    :name "withcoord",
+    :type "enum",
+    :optional true}
+   {:enum ["WITHDIST"], :name "withdist", :type "enum", :optional true}
+   {:enum ["WITHHASH"],
+    :name "withhash",
+    :type "enum",
+    :optional true}],
+  :complexity
+  "O(N+log(M)) where N is the number of elements in the grid-aligned bounding box area around the shape provided as the filter and M is the number of items inside the shape",
+  :summary
+  "Query a sorted set representing a geospatial index to fetch members inside an area of a box or a circle."},
+ :xlen
+ {:since "5.0.0",
+  :group "stream",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Return the number of entries in a stream"},
+ :hrandfield
+ {:since "6.2.0",
+  :group "hash",
+  :arguments
+  [{:name "key", :type "key"}
+   {:block
+    [{:name "count", :type "integer"}
+     {:enum ["WITHVALUES"],
+      :name "withvalues",
+      :type "enum",
+      :optional true}],
+    :name "options",
+    :type "block",
+    :optional true}],
+  :complexity "O(N) where N is the number of fields returned",
+  :summary "Get one or multiple random fields from a hash"},
+ :keys
+ {:since "1.0.0",
+  :group "generic",
+  :arguments [{:name "pattern", :type "pattern"}],
+  :complexity
+  "O(N) with N being the number of keys in the database, under the assumption that the key names in the database and the given pattern have limited length.",
+  :summary "Find all keys matching the given pattern"},
+ :georadius
+ {:since "3.2.0",
+  :group "geo",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "longitude", :type "double"}
+   {:name "latitude", :type "double"}
+   {:name "radius", :type "double"}
+   {:enum ["m" "km" "ft" "mi"], :name "unit", :type "enum"}
+   {:enum ["WITHCOORD"],
+    :name "withcoord",
+    :type "enum",
+    :optional true}
+   {:enum ["WITHDIST"], :name "withdist", :type "enum", :optional true}
+   {:enum ["WITHHASH"], :name "withhash", :type "enum", :optional true}
+   {:block
+    [{:name "count", :command "COUNT", :type "integer"}
+     {:enum ["ANY"], :name "any", :type "enum", :optional true}],
+    :name "count",
+    :type "block",
+    :optional true}
+   {:enum ["ASC" "DESC"], :name "order", :type "enum", :optional true}
+   {:name "key", :command "STORE", :type "key", :optional true}
+   {:name "key", :command "STOREDIST", :type "key", :optional true}],
+  :complexity
+  "O(N+log(M)) where N is the number of elements inside the bounding box of the circular area delimited by center and radius and M is the number of items inside the index.",
+  :summary
+  "Query a sorted set representing a geospatial index to fetch members matching a given maximum distance from a point"},
+ :hsetnx
+ {:since "2.0.0",
+  :group "hash",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "field", :type "string"}
+   {:name "value", :type "string"}],
+  :complexity "O(1)",
+  :summary
+  "Set the value of a hash field, only if the field does not exist"},
+ :sscan
+ {:since "2.8.0",
+  :group "set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "cursor", :type "integer"}
+   {:name "pattern", :command "MATCH", :type "pattern", :optional true}
+   {:name "count", :command "COUNT", :type "integer", :optional true}],
+  :complexity
+  "O(1) for every call. O(N) for a complete iteration, including enough command calls for the cursor to return back to 0. N is the number of elements inside the collection..",
+  :summary "Incrementally iterate Set elements"},
+ :xinfo
+ {:since "5.0.0",
+  :group "stream",
+  :arguments
+  [{:name ["key" "groupname"],
+    :command "CONSUMERS",
+    :type ["key" "string"],
+    :optional true}
+   {:name "key", :command "GROUPS", :type "key", :optional true}
+   {:name "key", :command "STREAM", :type "key", :optional true}
+   {:enum ["HELP"], :name "help", :type "enum", :optional true}],
+  :complexity
+  "O(N) with N being the number of returned items for the subcommands CONSUMERS and GROUPS. The STREAM subcommand is O(log N) with N being the number of items in the stream.",
+  :summary "Get information on streams and consumer groups"},
+ :pexpireat
+ {:since "2.6.0",
+  :group "generic",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "milliseconds-timestamp", :type "posix time"}
+   {:enum ["NX" "XX" "GT" "LT"],
+    :name "condition",
+    :type "enum",
+    :optional true}],
+  :complexity "O(1)",
+  :summary
+  "Set the expiration for a key as a UNIX timestamp specified in milliseconds"},
+ :slowlog
+ {:since "2.2.12",
+  :group "server",
+  :arguments
+  [{:name "subcommand", :type "string"}
+   {:name "argument", :type "string", :optional true}],
+  :summary "Manages the Redis slow queries log"},
+ :hlen
+ {:since "2.0.0",
+  :group "hash",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Get the number of fields in a hash"},
+ :zrevrangebylex
+ {:since "2.8.9",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "max", :type "string"}
+   {:name "min", :type "string"}
+   {:name ["offset" "count"],
+    :command "LIMIT",
+    :type ["integer" "integer"],
+    :optional true}],
+  :complexity
+  "O(log(N)+M) with N being the number of elements in the sorted set and M the number of elements being returned. If M is constant (e.g. always asking for the first 10 elements with LIMIT), you can consider it O(log(N)).",
+  :summary
+  "Return a range of members in a sorted set, by lexicographical range, ordered from higher to lower strings."},
+ :decrby
+ {:since "1.0.0",
+  :group "string",
+  :arguments
+  [{:name "key", :type "key"} {:name "decrement", :type "integer"}],
+  :complexity "O(1)",
+  :summary "Decrement the integer value of a key by the given number"},
+ :memory-usage
+ {:since "4.0.0",
+  :group "server",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "count",
+    :command "SAMPLES",
+    :type "integer",
+    :optional true}],
+  :complexity "O(N) where N is the number of samples.",
+  :summary "Estimate the memory usage of a key"},
+ :lmove
+ {:since "6.2.0",
+  :group "list",
+  :arguments
+  [{:name "source", :type "key"}
+   {:name "destination", :type "key"}
+   {:enum ["LEFT" "RIGHT"], :name "wherefrom", :type "enum"}
+   {:enum ["LEFT" "RIGHT"], :name "whereto", :type "enum"}],
+  :complexity "O(1)",
+  :summary
+  "Pop an element from a list, push it to another list and return it"},
+ :xgroup
+ {:since "5.0.0",
+  :group "stream",
+  :arguments
+  [{:block
+    [{:name ["key" "groupname"],
+      :command "CREATE",
+      :type ["key" "string"]}
+     {:enum ["ID" "$"], :name "id", :type "enum"}
+     {:command "MKSTREAM", :optional true}],
+    :name "create",
+    :type "block",
+    :optional true}
+   {:block
+    [{:name ["key" "groupname"],
+      :command "SETID",
+      :type ["key" "string"]}
+     {:enum ["ID" "$"], :name "id", :type "enum"}],
+    :name "setid",
+    :type "block",
+    :optional true}
+   {:name ["key" "groupname"],
+    :command "DESTROY",
+    :type ["key" "string"],
+    :optional true}
+   {:name ["key" "groupname" "consumername"],
+    :command "CREATECONSUMER",
+    :type ["key" "string" "string"],
+    :optional true}
+   {:name ["key" "groupname" "consumername"],
+    :command "DELCONSUMER",
+    :type ["key" "string" "string"],
+    :optional true}],
+  :complexity
+  "O(1) for all the subcommands, with the exception of the DESTROY subcommand which takes an additional O(M) time in order to delete the M entries inside the consumer group pending entries list (PEL).",
+  :summary "Create, destroy, and manage consumer groups."},
+ :lpush
+ {:since "1.0.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "element", :type "string", :multiple true}],
+  :complexity
+  "O(1) for each element added, so O(N) to add N elements when the command is called with multiple arguments.",
+  :summary "Prepend one or multiple elements to a list"},
+ :getrange
+ {:since "2.4.0",
+  :group "string",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "start", :type "integer"}
+   {:name "end", :type "integer"}],
+  :complexity
+  "O(N) where N is the length of the returned string. The complexity is ultimately determined by the returned length, but because creating a substring from an existing string is very cheap, it can be considered O(1) for small strings.",
+  :summary "Get a substring of the string stored at a key"},
+ :msetnx
+ {:since "1.0.1",
+  :group "string",
+  :arguments
+  [{:name ["key" "value"], :type ["key" "string"], :multiple true}],
+  :complexity "O(N) where N is the number of keys to set.",
+  :summary
+  "Set multiple keys to multiple values, only if none of the keys exist"},
+ :blpop
+ {:since "2.0.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key", :multiple true}
+   {:name "timeout", :type "double"}],
+  :complexity "O(N) where N is the number of provided keys.",
+  :summary
+  "Remove and get the first element in a list, or block until one is available"},
+ :multi
+ {:since "1.2.0",
+  :group "transactions",
+  :summary "Mark the start of a transaction block"},
+ :lpop
+ {:since "1.0.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "count", :type "integer", :optional true}],
+  :complexity "O(N) where N is the number of elements returned",
+  :summary "Remove and get the first elements in a list"},
+ :cluster-set-config-epoch
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments [{:name "config-epoch", :type "integer"}],
+  :complexity "O(1)",
+  :summary "Set the configuration epoch in a new node"},
+ :zpopmax
+ {:since "5.0.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "count", :type "integer", :optional true}],
+  :complexity
+  "O(log(N)*M) with N being the number of elements in the sorted set, and M being the number of elements popped.",
+  :summary
+  "Remove and return members with the highest scores in a sorted set"},
+ :memory-stats
+ {:since "4.0.0",
+  :group "server",
+  :summary "Show memory usage details"},
+ :monitor
+ {:since "1.0.0",
+  :group "server",
+  :summary
+  "Listen for all requests received by the server in real time"},
+ :psync
+ {:since "2.8.0",
+  :group "server",
+  :arguments
+  [{:name "replicationid", :type "integer"}
+   {:name "offset", :type "integer"}],
+  :summary "Internal command used for replication"},
+ :latency-doctor
+ {:since "2.8.13",
+  :group "server",
+  :summary "Return a human readable latency analysis report."},
+ :touch
+ {:since "3.2.1",
+  :group "generic",
+  :arguments [{:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(N) where N is the number of keys that will be touched.",
+  :summary
+  "Alters the last access time of a key(s). Returns the number of existing keys specified."},
+ :zdiffstore
+ {:since "6.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "destination", :type "key"}
+   {:name "numkeys", :type "integer"}
+   {:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(L + (N-K)log(N)) worst case where L is the total number of elements in all the sets, N is the size of the first set, and K is the size of the result set.",
+  :summary
+  "Subtract multiple sorted sets and store the resulting sorted set in a new key"},
+ :watch
+ {:since "2.2.0",
+  :group "transactions",
+  :arguments [{:name "key", :type "key", :multiple true}],
+  :complexity "O(1) for every key.",
+  :summary
+  "Watch the given keys to determine execution of the MULTI/EXEC block"},
+ :smove
+ {:since "1.0.0",
+  :group "set",
+  :arguments
+  [{:name "source", :type "key"}
+   {:name "destination", :type "key"}
+   {:name "member", :type "string"}],
+  :complexity "O(1)",
+  :summary "Move a member from one set to another"},
+ :punsubscribe
+ {:since "2.0.0",
+  :group "pubsub",
+  :arguments
+  [{:name "pattern", :type "pattern", :multiple true, :optional true}],
+  :complexity
+  "O(N+M) where N is the number of patterns the client is already subscribed and M is the number of total patterns subscribed in the system (by any client).",
+  :summary
+  "Stop listening for messages posted to channels matching the given patterns"},
+ :info
+ {:since "1.0.0",
+  :group "server",
+  :arguments [{:name "section", :type "string", :optional true}],
+  :summary "Get information and statistics about the server"},
+ :lastsave
+ {:since "1.0.0",
+  :group "server",
+  :summary
+  "Get the UNIX time stamp of the last successful save to disk"},
+ :cluster-slots
+ {:since "3.0.0",
+  :group "cluster",
+  :complexity "O(N) where N is the total number of Cluster nodes",
+  :summary "Get array of Cluster slot to node mappings"},
+ :zrevrange
+ {:since "1.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "start", :type "integer"}
+   {:name "stop", :type "integer"}
+   {:enum ["WITHSCORES"],
+    :name "withscores",
+    :type "enum",
+    :optional true}],
+  :complexity
+  "O(log(N)+M) with N being the number of elements in the sorted set and M the number of elements returned.",
+  :summary
+  "Return a range of members in a sorted set, by index, with scores ordered from high to low"},
+ :cluster-nodes
+ {:since "3.0.0",
+  :group "cluster",
+  :complexity "O(N) where N is the total number of Cluster nodes",
+  :summary "Get Cluster config for the node"},
+ :sdiffstore
+ {:since "1.0.0",
+  :group "set",
+  :arguments
+  [{:name "destination", :type "key"}
+   {:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(N) where N is the total number of elements in all given sets.",
+  :summary
+  "Subtract multiple sets and store the resulting set in a key"},
+ :cluster-failover
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments
+  [{:enum ["FORCE" "TAKEOVER"],
+    :name "options",
+    :type "enum",
+    :optional true}],
+  :complexity "O(1)",
+  :summary
+  "Forces a replica to perform a manual failover of its master."},
+ :config-set
+ {:since "2.0.0",
+  :group "server",
+  :arguments
+  [{:name "parameter", :type "string"}
+   {:name "value", :type "string"}],
+  :summary "Set a configuration parameter to the given value"},
+ :zinter
+ {:since "6.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "numkeys", :type "integer"}
+   {:name "key", :type "key", :multiple true}
+   {:name "weight",
+    :variadic true,
+    :command "WEIGHTS",
+    :type "integer",
+    :optional true}
+   {:enum ["SUM" "MIN" "MAX"],
+    :name "aggregate",
+    :command "AGGREGATE",
+    :type "enum",
+    :optional true}
+   {:enum ["WITHSCORES"],
+    :name "withscores",
+    :type "enum",
+    :optional true}],
+  :complexity
+  "O(N*K)+O(M*log(M)) worst case with N being the smallest input sorted set, K being the number of input sorted sets and M being the number of elements in the resulting sorted set.",
+  :summary "Intersect multiple sorted sets"},
+ :zrangebyscore
+ {:since "1.0.5",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "min", :type "double"}
+   {:name "max", :type "double"}
+   {:enum ["WITHSCORES"],
+    :name "withscores",
+    :type "enum",
+    :optional true}
+   {:name ["offset" "count"],
+    :command "LIMIT",
+    :type ["integer" "integer"],
+    :optional true}],
+  :complexity
+  "O(log(N)+M) with N being the number of elements in the sorted set and M the number of elements being returned. If M is constant (e.g. always asking for the first 10 elements with LIMIT), you can consider it O(log(N)).",
+  :summary "Return a range of members in a sorted set, by score"},
+ :evalsha
+ {:since "2.6.0",
+  :group "scripting",
+  :arguments
+  [{:name "sha1", :type "string"}
+   {:name "numkeys", :type "integer"}
+   {:name "key", :type "key", :multiple true, :optional true}
+   {:name "arg", :type "string", :multiple true, :optional true}],
+  :complexity "Depends on the script that is executed.",
+  :summary "Execute a Lua script server side"},
+ :wait
+ {:since "3.0.0",
+  :group "generic",
+  :arguments
+  [{:name "numreplicas", :type "integer"}
+   {:name "timeout", :type "integer"}],
+  :complexity "O(1)",
+  :summary
+  "Wait for the synchronous replication of all the write commands sent in the context of the current connection"},
+ :brpop
+ {:since "2.0.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key", :multiple true}
+   {:name "timeout", :type "double"}],
+  :complexity "O(N) where N is the number of provided keys.",
+  :summary
+  "Remove and get the last element in a list, or block until one is available"},
+ :sdiff
+ {:since "1.0.0",
+  :group "set",
+  :arguments [{:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(N) where N is the total number of elements in all given sets.",
+  :summary "Subtract multiple sets"},
+ :discard
+ {:since "2.0.0",
+  :group "transactions",
+  :summary "Discard all commands issued after MULTI"},
+ :hstrlen
+ {:since "3.2.0",
+  :group "hash",
+  :arguments
+  [{:name "key", :type "key"} {:name "field", :type "string"}],
+  :complexity "O(1)",
+  :summary "Get the length of the value of a hash field"},
+ :flushdb
+ {:since "1.0.0",
+  :group "server",
+  :arguments
+  [{:enum ["ASYNC" "SYNC"],
+    :name "async",
+    :type "enum",
+    :optional true}],
+  :complexity
+  "O(N) where N is the number of keys in the selected database",
+  :summary "Remove all keys from the current database"},
+ :zrevrangebyscore
+ {:since "2.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "max", :type "double"}
+   {:name "min", :type "double"}
+   {:enum ["WITHSCORES"],
+    :name "withscores",
+    :type "enum",
+    :optional true}
+   {:name ["offset" "count"],
+    :command "LIMIT",
+    :type ["integer" "integer"],
+    :optional true}],
+  :complexity
+  "O(log(N)+M) with N being the number of elements in the sorted set and M the number of elements being returned. If M is constant (e.g. always asking for the first 10 elements with LIMIT), you can consider it O(log(N)).",
+  :summary
+  "Return a range of members in a sorted set, by score, with scores ordered from high to low"},
+ :lrem
+ {:since "1.0.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "count", :type "integer"}
+   {:name "element", :type "string"}],
+  :complexity
+  "O(N+M) where N is the length of the list and M is the number of elements removed.",
+  :summary "Remove elements from a list"},
+ :config-resetstat
+ {:since "2.0.0",
+  :group "server",
+  :complexity "O(1)",
+  :summary "Reset the stats returned by INFO"},
+ :setbit
+ {:since "2.2.0",
+  :group "bitmap",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "offset", :type "integer"}
+   {:name "value", :type "integer"}],
+  :complexity "O(1)",
+  :summary
+  "Sets or clears the bit at offset in the string value stored at key"},
+ :acl-help
+ {:since "6.0.0",
+  :group "server",
+  :complexity "O(1)",
+  :summary "Show helpful text about the different subcommands"},
+ :cluster-countkeysinslot
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments [{:name "slot", :type "integer"}],
+  :complexity "O(1)",
+  :summary
+  "Return the number of local keys in the specified hash slot"},
+ :spop
+ {:since "1.0.0",
+  :group "set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "count", :type "integer", :optional true}],
+  :complexity
+  "Without the count argument O(1), otherwise O(N) where N is the value of the passed count.",
+  :summary
+  "Remove and return one or multiple random members from a set"},
+ :scan
+ {:since "2.8.0",
+  :group "generic",
+  :arguments
+  [{:name "cursor", :type "integer"}
+   {:name "pattern", :command "MATCH", :type "pattern", :optional true}
+   {:name "count", :command "COUNT", :type "integer", :optional true}
+   {:name "type", :command "TYPE", :type "string", :optional true}],
+  :complexity
+  "O(1) for every call. O(N) for a complete iteration, including enough command calls for the cursor to return back to 0. N is the number of elements inside the collection.",
+  :summary "Incrementally iterate the keys space"},
+ :zunion
+ {:since "6.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "numkeys", :type "integer"}
+   {:name "key", :type "key", :multiple true}
+   {:name "weight",
+    :variadic true,
+    :command "WEIGHTS",
+    :type "integer",
+    :optional true}
+   {:enum ["SUM" "MIN" "MAX"],
+    :name "aggregate",
+    :command "AGGREGATE",
+    :type "enum",
+    :optional true}
+   {:enum ["WITHSCORES"],
+    :name "withscores",
+    :type "enum",
+    :optional true}],
+  :complexity
+  "O(N)+O(M*log(M)) with N being the sum of the sizes of the input sorted sets, and M being the number of elements in the resulting sorted set.",
+  :summary "Add multiple sorted sets"},
+ :client-getname
+ {:since "2.6.9",
+  :group "connection",
+  :complexity "O(1)",
+  :summary "Get the current connection name"},
+ :incrby
+ {:since "1.0.0",
+  :group "string",
+  :arguments
+  [{:name "key", :type "key"} {:name "increment", :type "integer"}],
+  :complexity "O(1)",
+  :summary "Increment the integer value of a key by the given amount"},
+ :latency-graph
+ {:since "2.8.13",
+  :group "server",
+  :arguments [{:name "event", :type "string"}],
+  :summary "Return a latency graph for the event."},
+ :zmscore
+ {:since "6.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "member", :type "string", :multiple true}],
+  :complexity "O(N) where N is the number of members being requested.",
+  :summary
+  "Get the score associated with the given members in a sorted set"},
+ :cluster-setslot
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments
+  [{:name "slot", :type "integer"}
+   {:enum ["IMPORTING" "MIGRATING" "STABLE" "NODE"],
+    :name "subcommand",
+    :type "enum"}
+   {:name "node-id", :type "string", :optional true}],
+  :complexity "O(1)",
+  :summary "Bind a hash slot to a specific node"},
+ :cluster-delslots
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments [{:name "slot", :type "integer", :multiple true}],
+  :complexity
+  "O(N) where N is the total number of hash slot arguments",
+  :summary "Set hash slots as unbound in receiving node"},
+ :rpop
+ {:since "1.0.0",
+  :group "list",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "count", :type "integer", :optional true}],
+  :complexity "O(N) where N is the number of elements returned",
+  :summary "Remove and get the last elements in a list"},
+ :zrangestore
+ {:since "6.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "dst", :type "key"}
+   {:name "src", :type "key"}
+   {:name "min", :type "string"}
+   {:name "max", :type "string"}
+   {:enum ["BYSCORE" "BYLEX"],
+    :name "sortby",
+    :type "enum",
+    :optional true}
+   {:enum ["REV"], :name "rev", :type "enum", :optional true}
+   {:name ["offset" "count"],
+    :command "LIMIT",
+    :type ["integer" "integer"],
+    :optional true}],
+  :complexity
+  "O(log(N)+M) with N being the number of elements in the sorted set and M the number of elements stored into the destination key.",
+  :summary
+  "Store a range of members from sorted set into another key"},
+ :client-reply
+ {:since "3.2.0",
+  :group "connection",
+  :arguments
+  [{:enum ["ON" "OFF" "SKIP"], :name "reply-mode", :type "enum"}],
+  :complexity "O(1)",
+  :summary "Instruct the server whether to reply to commands"},
+ :zrange
+ {:since "1.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "min", :type "string"}
+   {:name "max", :type "string"}
+   {:enum ["BYSCORE" "BYLEX"],
+    :name "sortby",
+    :type "enum",
+    :optional true}
+   {:enum ["REV"], :name "rev", :type "enum", :optional true}
+   {:name ["offset" "count"],
+    :command "LIMIT",
+    :type ["integer" "integer"],
+    :optional true}
+   {:enum ["WITHSCORES"],
+    :name "withscores",
+    :type "enum",
+    :optional true}],
+  :complexity
+  "O(log(N)+M) with N being the number of elements in the sorted set and M the number of elements returned.",
+  :summary "Return a range of members in a sorted set"},
+ :zremrangebyscore
+ {:since "1.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "min", :type "double"}
+   {:name "max", :type "double"}],
+  :complexity
+  "O(log(N)+M) with N being the number of elements in the sorted set and M the number of elements removed by the operation.",
+  :summary
+  "Remove all members in a sorted set within the given scores"},
+ :cluster-forget
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments [{:name "node-id", :type "string"}],
+  :complexity "O(1)",
+  :summary "Remove a node from the nodes table"},
+ :cluster-addslots
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments [{:name "slot", :type "integer", :multiple true}],
+  :complexity
+  "O(N) where N is the total number of hash slot arguments",
+  :summary "Assign new hash slots to receiving node"},
+ :mset
+ {:since "1.0.1",
+  :group "string",
+  :arguments
+  [{:name ["key" "value"], :type ["key" "string"], :multiple true}],
+  :complexity "O(N) where N is the number of keys to set.",
+  :summary "Set multiple keys to multiple values"},
+ :cluster-replicate
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments [{:name "node-id", :type "string"}],
+  :complexity "O(1)",
+  :summary
+  "Reconfigure a node as a replica of the specified master node"},
+ :bitfield
+ {:since "3.2.0",
+  :group "bitmap",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name ["type" "offset"],
+    :command "GET",
+    :type ["type" "integer"],
+    :optional true}
+   {:name ["type" "offset" "value"],
+    :command "SET",
+    :type ["type" "integer" "integer"],
+    :optional true}
+   {:name ["type" "offset" "increment"],
+    :command "INCRBY",
+    :type ["type" "integer" "integer"],
+    :optional true}
+   {:enum ["WRAP" "SAT" "FAIL"],
+    :command "OVERFLOW",
+    :type "enum",
+    :optional true}],
+  :complexity "O(1) for each subcommand specified",
+  :summary "Perform arbitrary bitfield integer operations on strings"},
+ :readwrite
+ {:since "3.0.0",
+  :group "cluster",
+  :complexity "O(1)",
+  :summary
+  "Disables read queries for a connection to a cluster replica node"},
+ :cluster-reset
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments
+  [{:enum ["HARD" "SOFT"],
+    :name "reset-type",
+    :type "enum",
+    :optional true}],
+  :complexity
+  "O(N) where N is the number of known nodes. The command may execute a FLUSHALL as a side effect.",
+  :summary "Reset a Redis Cluster node"},
+ :rpoplpush
+ {:since "1.2.0",
+  :group "list",
+  :arguments
+  [{:name "source", :type "key"} {:name "destination", :type "key"}],
+  :complexity "O(1)",
+  :summary
+  "Remove the last element in a list, prepend it to another list and return it"},
+ :quit
+ {:since "1.0.0",
+  :group "connection",
+  :summary "Close the connection"},
+ :setex
+ {:since "2.0.0",
+  :group "string",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "seconds", :type "integer"}
+   {:name "value", :type "string"}],
+  :complexity "O(1)",
+  :summary "Set the value and expiration of a key"},
+ :set
+ {:since "1.0.0",
+  :group "string",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "value", :type "string"}
+   {:enum
+    ["EX seconds"
+     "PX milliseconds"
+     "EXAT timestamp"
+     "PXAT milliseconds-timestamp"
+     "KEEPTTL"],
+    :name "expiration",
+    :type "enum",
+    :optional true}
+   {:enum ["NX" "XX"], :name "condition", :type "enum", :optional true}
+   {:enum ["GET"], :name "get", :type "enum", :optional true}],
+  :complexity "O(1)",
+  :summary "Set the string value of a key"},
+ :zscore
+ {:since "1.2.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key"} {:name "member", :type "string"}],
+  :complexity "O(1)",
+  :summary
+  "Get the score associated with the given member in a sorted set"},
+ :xrange
+ {:since "5.0.0",
+  :group "stream",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "start", :type "string"}
+   {:name "end", :type "string"}
+   {:name "count", :command "COUNT", :type "integer", :optional true}],
+  :complexity
+  "O(N) with N being the number of elements being returned. If N is constant (e.g. always asking for the first 10 elements with COUNT), you can consider it O(1).",
+  :summary
+  "Return a range of elements in a stream, with IDs matching the specified IDs interval"},
+ :brpoplpush
+ {:since "2.2.0",
+  :group "list",
+  :arguments
+  [{:name "source", :type "key"}
+   {:name "destination", :type "key"}
+   {:name "timeout", :type "double"}],
+  :complexity "O(1)",
+  :summary
+  "Pop an element from a list, push it to another list and return it; or block until one is available"},
+ :xtrim
+ {:since "5.0.0",
+  :group "stream",
+  :arguments
+  [{:name "key", :type "key"}
+   {:block
+    [{:enum ["MAXLEN" "MINID"], :name "strategy", :type "enum"}
+     {:enum ["=" "~"], :name "operator", :type "enum", :optional true}
+     {:name "threshold", :type "string"}
+     {:name "count",
+      :command "LIMIT",
+      :type "integer",
+      :optional true}],
+    :name "trim",
+    :type "block"}],
+  :complexity
+  "O(N), with N being the number of evicted entries. Constant times are very small however, since entries are organized in macro nodes containing multiple entries that can be released with a single deallocation.",
+  :summary
+  "Trims the stream to (approximately if '~' is passed) a certain size"},
+ :memory-purge
+ {:since "4.0.0",
+  :group "server",
+  :summary "Ask the allocator to release memory"},
+ :cluster-saveconfig
+ {:since "3.0.0",
+  :group "cluster",
+  :complexity "O(1)",
+  :summary "Forces the node to save cluster state on disk"},
+ :dump
+ {:since "2.6.0",
+  :group "generic",
+  :arguments [{:name "key", :type "key"}],
+  :complexity
+  "O(1) to access the key and additional O(N*M) to serialize it, where N is the number of Redis objects composing the value and M their average size. For small string values the time complexity is thus O(1)+O(1*M) where M is small, so simply O(1).",
+  :summary
+  "Return a serialized version of the value stored at the specified key."},
+ :xack
+ {:since "5.0.0",
+  :group "stream",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "group", :type "string"}
+   {:name "ID", :type "string", :multiple true}],
+  :complexity "O(1) for each message ID processed.",
+  :summary
+  "Marks a pending message as correctly processed, effectively removing it from the pending entries list of the consumer group. Return value of the command is the number of messages successfully acknowledged, that is, the IDs we were actually able to resolve in the PEL."},
+ :bzpopmax
+ {:since "5.0.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "key", :type "key", :multiple true}
+   {:name "timeout", :type "double"}],
+  :complexity
+  "O(log(N)) with N being the number of elements in the sorted set.",
+  :summary
+  "Remove and return the member with the highest score from one or more sorted sets, or block until one is available"},
+ :cluster-keyslot
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments [{:name "key", :type "string"}],
+  :complexity "O(N) where N is the number of bytes in the key",
+  :summary "Returns the hash slot of the specified key"},
+ :cluster-flushslots
+ {:since "3.0.0",
+  :group "cluster",
+  :complexity "O(1)",
+  :summary "Delete a node's own slots information"},
+ :module-unload
+ {:since "4.0.0",
+  :group "server",
+  :arguments [{:name "name", :type "string"}],
+  :complexity "O(1)",
+  :summary "Unload a module"},
+ :hmset
+ {:since "2.0.0",
+  :group "hash",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name ["field" "value"],
+    :type ["string" "string"],
+    :multiple true}],
+  :complexity "O(N) where N is the number of fields being set.",
+  :summary "Set multiple hash fields to multiple values"},
+ :cluster-bumpepoch
+ {:since "3.0.0",
+  :group "cluster",
+  :complexity "O(1)",
+  :summary "Advance the cluster config epoch"},
+ :subscribe
+ {:since "2.0.0",
+  :group "pubsub",
+  :arguments [{:name "channel", :type "string", :multiple true}],
+  :complexity
+  "O(N) where N is the number of channels to subscribe to.",
+  :summary "Listen for messages published to the given channels"},
+ :hgetall
+ {:since "2.0.0",
+  :group "hash",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(N) where N is the size of the hash.",
+  :summary "Get all the fields and values in a hash"},
+ :getbit
+ {:since "2.2.0",
+  :group "bitmap",
+  :arguments
+  [{:name "key", :type "key"} {:name "offset", :type "integer"}],
+  :complexity "O(1)",
+  :summary
+  "Returns the bit value at offset in the string value stored at key"},
+ :bgrewriteaof
+ {:since "1.0.0",
+  :group "server",
+  :summary "Asynchronously rewrite the append-only file"},
+ :unlink
+ {:since "4.0.0",
+  :group "generic",
+  :arguments [{:name "key", :type "key", :multiple true}],
+  :complexity
+  "O(1) for each key removed regardless of its size. Then the command does O(N) work in a different thread in order to reclaim memory, where N is the number of allocations the deleted objects where composed of.",
+  :summary
+  "Delete a key asynchronously in another thread. Otherwise it is just as DEL, but non blocking."},
+ :hdel
+ {:since "2.0.0",
+  :group "hash",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "field", :type "string", :multiple true}],
+  :complexity "O(N) where N is the number of fields to be removed.",
+  :summary "Delete one or more hash fields"},
+ :debug-segfault
+ {:since "1.0.0", :group "server", :summary "Make the server crash"},
+ :cluster-myid
+ {:since "3.0.0",
+  :group "cluster",
+  :complexity "O(1)",
+  :summary "Return the node id"},
+ :object
+ {:since "2.2.3",
+  :group "generic",
+  :arguments
+  [{:name "subcommand", :type "string"}
+   {:name "arguments",
+    :type "string",
+    :multiple true,
+    :optional true}],
+  :complexity "O(1) for all the currently implemented subcommands.",
+  :summary "Inspect the internals of Redis objects"},
+ :pexpiretime
+ {:since "7.0.0",
+  :group "generic",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary
+  "Get the expiration Unix timestamp for a key in milliseconds"},
+ :decr
+ {:since "1.0.0",
+  :group "string",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Decrement the integer value of a key by one"},
+ :sort
+ {:since "1.0.0",
+  :group "generic",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "pattern", :command "BY", :type "pattern", :optional true}
+   {:name ["offset" "count"],
+    :command "LIMIT",
+    :type ["integer" "integer"],
+    :optional true}
+   {:name "pattern",
+    :command "GET",
+    :type "string",
+    :multiple true,
+    :optional true}
+   {:enum ["ASC" "DESC"], :name "order", :type "enum", :optional true}
+   {:enum ["ALPHA"], :name "sorting", :type "enum", :optional true}
+   {:name "destination",
+    :command "STORE",
+    :type "key",
+    :optional true}],
+  :complexity
+  "O(N+M*log(M)) where N is the number of elements in the list or set to sort, and M the number of returned elements. When the elements are not sorted, complexity is currently O(N) as there is a copy step that will be avoided in next releases.",
+  :summary "Sort the elements in a list, set or sorted set"},
+ :client-kill
+ {:since "2.4.0",
+  :group "connection",
+  :arguments
+  [{:name "ip:port", :type "string", :optional true}
+   {:name "client-id", :command "ID", :type "integer", :optional true}
+   {:enum ["normal" "master" "slave" "pubsub"],
+    :command "TYPE",
+    :type "enum",
+    :optional true}
+   {:name "username", :command "USER", :type "string", :optional true}
+   {:name "ip:port", :command "ADDR", :type "string", :optional true}
+   {:name "ip:port", :command "LADDR", :type "string", :optional true}
+   {:name "yes/no",
+    :command "SKIPME",
+    :type "string",
+    :optional true}],
+  :complexity "O(N) where N is the number of client connections",
+  :summary "Kill the connection of a client"},
+ :publish
+ {:since "2.0.0",
+  :group "pubsub",
+  :arguments
+  [{:name "channel", :type "string"}
+   {:name "message", :type "string"}],
+  :complexity
+  "O(N+M) where N is the number of clients subscribed to the receiving channel and M is the total number of subscribed patterns (by any client).",
+  :summary "Post a message to a channel"},
+ :zinterstore
+ {:since "2.0.0",
+  :group "sorted_set",
+  :arguments
+  [{:name "destination", :type "key"}
+   {:name "numkeys", :type "integer"}
+   {:name "key", :type "key", :multiple true}
+   {:name "weight",
+    :variadic true,
+    :command "WEIGHTS",
+    :type "integer",
+    :optional true}
+   {:enum ["SUM" "MIN" "MAX"],
+    :name "aggregate",
+    :command "AGGREGATE",
+    :type "enum",
+    :optional true}],
+  :complexity
+  "O(N*K)+O(M*log(M)) worst case with N being the smallest input sorted set, K being the number of input sorted sets and M being the number of elements in the resulting sorted set.",
+  :summary
+  "Intersect multiple sorted sets and store the resulting sorted set in a new key"},
+ :pubsub
+ {:since "2.8.0",
+  :group "pubsub",
+  :arguments
+  [{:name "subcommand", :type "string"}
+   {:name "argument", :type "string", :multiple true, :optional true}],
+  :complexity
+  "O(N) for the CHANNELS subcommand, where N is the number of active channels, and assuming constant time pattern matching (relatively short channels and patterns). O(N) for the NUMSUB subcommand, where N is the number of requested channels. O(1) for the NUMPAT subcommand.",
+  :summary "Inspect the state of the Pub/Sub subsystem"},
+ :cluster-slaves
+ {:since "3.0.0",
+  :group "cluster",
+  :arguments [{:name "node-id", :type "string"}],
+  :complexity "O(1)",
+  :summary "List replica nodes of the specified master node"},
+ :memory-help
+ {:since "4.0.0",
+  :group "server",
+  :summary "Show helpful text about the different subcommands"},
+ :shutdown
+ {:since "1.0.0",
+  :group "server",
+  :arguments
+  [{:enum ["NOSAVE" "SAVE"],
+    :name "save-mode",
+    :type "enum",
+    :optional true}],
+  :summary
+  "Synchronously save the dataset to disk and then shut down the server"},
+ :getdel
+ {:since "6.2.0",
+  :group "string",
+  :arguments [{:name "key", :type "key"}],
+  :complexity "O(1)",
+  :summary "Get the value of a key and delete the key"},
+ :select
+ {:since "1.0.0",
+  :group "connection",
+  :arguments [{:name "index", :type "integer"}],
+  :summary "Change the selected database for the current connection"},
+ :script-kill
+ {:since "2.6.0",
+  :group "scripting",
+  :complexity "O(1)",
+  :summary "Kill the script currently in execution."},
+ :xread
+ {:since "5.0.0",
+  :group "stream",
+  :arguments
+  [{:name "count", :command "COUNT", :type "integer", :optional true}
+   {:name "milliseconds",
+    :command "BLOCK",
+    :type "integer",
+    :optional true}
+   {:enum ["STREAMS"], :name "streams", :type "enum"}
+   {:name "key", :type "key", :multiple true}
+   {:name "ID", :type "string", :multiple true}],
+  :complexity
+  "For each stream mentioned: O(N) with N being the number of elements being returned, it means that XREAD-ing with a fixed COUNT is O(1). Note that when the BLOCK option is used, XADD will pay O(M) time in order to serve the M clients blocked on the stream getting new data.",
+  :summary
+  "Return never seen elements in multiple streams, with IDs greater than the ones reported by the caller for each stream. Can block."},
+ :psetex
+ {:since "2.6.0",
+  :group "string",
+  :arguments
+  [{:name "key", :type "key"}
+   {:name "milliseconds", :type "integer"}
+   {:name "value", :type "string"}],
+  :complexity "O(1)",
+  :summary "Set the value and expiration in milliseconds of a key"},
+ :pfmerge
+ {:since "2.8.9",
+  :group "hyperloglog",
+  :arguments
+  [{:name "destkey", :type "key"}
+   {:name "sourcekey", :type "key", :multiple true}],
+  :complexity
+  "O(N) to merge N HyperLogLogs, but with high constant times.",
+  :summary "Merge N different HyperLogLogs into a single one."},
+ :eval
+ {:since "2.6.0",
+  :group "scripting",
+  :arguments
+  [{:name "script", :type "string"}
+   {:name "numkeys", :type "integer"}
+   {:name "key", :type "key", :multiple true, :optional true}
+   {:name "arg", :type "string", :multiple true, :optional true}],
+  :complexity "Depends on the script that is executed.",
+  :summary "Execute a Lua script server side"}}
