@@ -136,8 +136,15 @@ obiwan.core/hget
 -------------------------
 obiwan.core/hget
 ([redis h f])
-  {:obiwan-doc takes in a jedis connection pool, a hash name and a field name if present, returns a field name value,
-   :redis-doc {:since 2.0.0, :group hash, :arguments [{:name key, :type key} {:name field, :type string}], :complexity O(1), :summary Get the value of a hash field}}
+  {:obiwan-doc takes in a jedis connection pool, a hash name and a field name
+               if present, returns a field name value,
+   :redis-doc {:since 2.0.0,
+               :group hash,
+               :arguments [{:name key, :type key}
+                           {:name field, :type string}],
+               :complexity O(1),
+               :summary Get the value of a hash field}}
+```
 
 ## license
 
