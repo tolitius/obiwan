@@ -18,11 +18,6 @@
 ;;TODO: add as a hook on building a jar
 (defn add-redis-docs [nspace]
   (doseq [[fname path] (ns-fns nspace)]
-    (when-let [rdoc (fname spec)]
-      (let [current (-> path meta :doc)
-            doc (if current
-                  {:obiwan-doc current
-                   :redis-doc rdoc}
-                  {:redis-doc rdoc})]
-        (alter-meta! path
-                     assoc :doc doc)))))
+    (when-let [doc (fname spec)]
+      (alter-meta! path
+                   assoc-in [:doc :redis-doc] doc))))

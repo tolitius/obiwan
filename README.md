@@ -125,8 +125,8 @@ redis command documentation can be added via `dev/add-redis-docs` function:
 ;; -------------------------
 ;; obiwan.core/hget
 ;; ([redis h f])
-;;   takes in a jedis connection pool, a hash name and a field name
-;;   if present, returns a field name value
+;;   {:obiwan-doc takes in a jedis connection pool, a hash name and a field name
+;;                if present, returns a field name value}
 
 => (require '[dev :refer :all])
 
