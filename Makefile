@@ -1,25 +1,22 @@
-.PHONY: clean jar tag outdated install deploy tree repl
+.PHONY: clean jar outdated install deploy tree repl
 
 clean:
-	rm -rf target
+	clojure -Sforce -T:build clean
 
-jar: tag
-	clojure -A:jar
+jar:
+	clojure -T:build jar
 
 outdated:
 	clojure -M:outdated
 
-tag:
-	clojure -A:tag
-
 install: jar
-	clojure -A:install
+	clojure -T:build install
 
 deploy: jar
-	clojure -A:deploy
+	clojure -T:build deploy
 
 tree:
-	mvn dependency:tree
+	clojure -Xdeps tree
 
 repl:
-	clojure -A:dev -A:repl
+	clojure -M:dev
