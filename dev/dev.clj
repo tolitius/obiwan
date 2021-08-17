@@ -4,30 +4,25 @@
             [clojure.string :as s]
             [clojure.java.io :as io]
             [clojure.repl :refer :all]
-            [clojure.pprint :refer [pprint]]))
+            [clojure.pprint :refer [pprint]]
+            [spec :as rspec]))
 
-(defonce redis-commands-url
-  "https://raw.githubusercontent.com/redis/redis-doc/master/commands.json")
+(def spec (rspec/slurp-redis-spec))
 
-(defn groom-command-name [cmd]
-  (-> cmd
-      name
-      s/lower-case
-      (s/replace #" " "-")
-      keyword))
+(defn ns-fns [nspace]
+ (let [raw (-> nspace symbol ns-publics)]
+   (->> (for [[k v] raw]
+          [(keyword k) v])
+        (into {}))))
 
-(defn groom-spec [spec]
-  (->> (for [[cmd doc] spec]
-         [(groom-command-name cmd) doc])
-       (into {})))
-
-(defn redis-commands []
-  (-> redis-commands-url
-      http/get
-      :body
-      (json/read-value json/keyword-keys-object-mapper)
-      groom-spec))
-
-(defn make-redis-spec []
-  (-> (redis-commands)
-      (pprint (io/writer "resources/spec.edn"))))
+;;TODO: add as a hook on building a jar
+(defn add-redis-docs [nspace]
+  (doseq [[fname path] (ns-fns nspace)]
+    (when-let [rdoc (fname spec)]
+      (let [current (-> path meta :doc)
+            doc (if current
+                  {:obiwan-doc current
+                   :redis-doc rdoc}
+                  {:redis-doc rdoc})]
+        (alter-meta! path
+                     assoc :doc doc)))))

@@ -47,7 +47,9 @@
 
 ;; hash
 
-(defn hget [^JedisPool redis h f]
+(defn hget
+  "takes in a jedis connection pool, a hash name and a field name if present, returns a field name value"
+  [^JedisPool redis h f]
   (op redis #(.hget % h f)))
 
 (defn hmget [^JedisPool redis h fs]

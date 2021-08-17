@@ -8,6 +8,7 @@
 redis clojure client based on [jedis](https://github.com/redis/jedis).
 
 - [spilling the beans](#spilling-the-beans)
+- [documentation](#documentation)
 - [license](#license)
 
 ## spilling the beans
@@ -114,6 +115,29 @@ looking inside the source (redis server):
 9) "pluto"
 127.0.0.1:6379>
 ```
+
+## documentation
+
+redis command documentation can be added via `dev/add-redis-docs` function:
+
+```clojure
+=> (doc redis/hget)
+-------------------------
+obiwan.core/hget
+([redis h f])
+  takes in a jedis connection pool, a hash name and a field name
+  if present, returns a field name value
+
+=> (require '[dev :refer :all])
+
+=> (add-redis-docs "obiwan.core")
+
+=> (doc redis/hget)
+-------------------------
+obiwan.core/hget
+([redis h f])
+  {:obiwan-doc takes in a jedis connection pool, a hash name and a field name if present, returns a field name value,
+   :redis-doc {:since 2.0.0, :group hash, :arguments [{:name key, :type key} {:name field, :type string}], :complexity O(1), :summary Get the value of a hash field}}
 
 ## license
 
