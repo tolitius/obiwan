@@ -5,15 +5,13 @@
 
  :aliases {:dev {:extra-paths ["dev" "dev-resources"]
                  :extra-deps {metosin/jsonista {:mvn/version "0.3.3"}
-                              clj-http/clj-http {:mvn/version "3.12.3"}}}
+                              com.bhauman/rebel-readline {:mvn/version "0.1.4"}
+                              clj-http/clj-http {:mvn/version "3.12.3"}}
+                 :main-opts ["-e" "(require 'dev)(in-ns 'dev)" "-m" "rebel-readline.main"]}
+           :build {:extra-paths ["dev" "dev-resources"]
+                   :extra-deps {io.github.clojure/tools.build {:sha "1e7c019" :git/tag "v0.1.6" :git/url "https://github.com/clojure/tools.build.git"}
+                                slipset/deps-deploy {:mvn/version "0.1.5"}
+                                tolitius/tag {:mvn/version "0.1.7"}}
+                   :ns-default build}
            :outdated {:extra-deps {olical/depot {:mvn/version "2.0.1"}}
-                      :main-opts  ["-m" "depot.outdated.main" "-a" "outdated"]}
-           :tag {:extra-deps {tolitius/tag {:mvn/version "0.1.7"}}
-                 :main-opts ["-m" "tag.core" "tolitius/obiwan" "redis clojure client based on jedis"]}
-           :jar {:extra-deps {seancorfield/depstar {:mvn/version "1.1.128"}}
-                 :extra-paths ["target/about"]
-                 :main-opts ["-m" "hf.depstar.jar" "target/obiwan.jar" "--exclude" "clojure/core/specs/alpha.*"]}
-           :deploy {:extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}
-                    :main-opts ["-m" "deps-deploy.deps-deploy" "deploy" "target/obiwan.jar"]}
-           :install {:extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}
-                     :main-opts ["-m" "deps-deploy.deps-deploy" "install" "target/obiwan.jar"]}}}
+                      :main-opts  ["-m" "depot.outdated.main" "-a" "outdated"]}}}
