@@ -5,11 +5,21 @@
 
  :aliases {:dev {:extra-paths ["dev" "dev-resources"]
                  :extra-deps {metosin/jsonista {:mvn/version "0.3.3"}
-                              com.bhauman/rebel-readline {:mvn/version "0.1.4"}
-                              clj-http/clj-http {:mvn/version "3.12.3"}}
-                 :main-opts ["-e" "(require 'dev)(in-ns 'dev)" "-m" "rebel-readline.main"]}
+io.github.clojure/tools.build {:sha "1e7c019"
+                                                               :git/tag "v0.1.6"
+                                                               :git/url "https://github.com/clojure/tools.build.git"}
+
+                              clj-http/clj-http {:mvn/version "3.12.3"}}}
+           :repl {:extra-deps {nrepl/nrepl {:mvn/version "0.7.0"}
+                               cider/cider-nrepl {:mvn/version "0.22.4"}
+                               com.bhauman/rebel-readline {:mvn/version "0.1.4"}}
+                  :main-opts ["-e" "(require 'dev)(in-ns 'dev)"
+                              "-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"
+                                                                  "-i" "-f" "rebel-readline.main/-main"]}
            :build {:extra-paths ["dev" "dev-resources"]
-                   :extra-deps {io.github.clojure/tools.build {:sha "1e7c019" :git/tag "v0.1.6" :git/url "https://github.com/clojure/tools.build.git"}
+                   :extra-deps {io.github.clojure/tools.build {:sha "1e7c019"
+                                                               :git/tag "v0.1.6"
+                                                               :git/url "https://github.com/clojure/tools.build.git"}
                                 slipset/deps-deploy {:mvn/version "0.1.5"}
                                 tolitius/tag {:mvn/version "0.1.7"}}
                    :ns-default build}

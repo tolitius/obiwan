@@ -19,3 +19,5 @@ doo-index.html
 .cljs_rhino_repl/
 out/
 .DS_Store
+*.pom.asc
+pom.xml

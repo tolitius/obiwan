@@ -18,5 +18,6 @@ deploy: jar
 tree:
 	clojure -Xdeps tree
 
+## does not work with "-M"s ¯\_(ツ)_/¯
 repl:
-	clojure -M:dev
+	clojure -A:dev -A:repl
