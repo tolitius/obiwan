@@ -1,6 +1,6 @@
 # obi wan
 
-> _"These aren't the droids you're looking for"_
+> _"these aren't the droids you're looking for"_
 
 [![<! release](https://img.shields.io/badge/dynamic/json.svg?label=release&url=https%3A%2F%2Fclojars.org%2Fcom.tolitius%2Fobiwan%2Flatest-version.json&query=version&colorB=blue)](https://github.com/tolitius/obiwan/releases)
 [![<! clojars>](https://img.shields.io/clojars/v/com.tolitius/obiwan.svg)](https://clojars.org/com.tolitius/obiwan)
@@ -119,7 +119,7 @@ looking inside the source (redis server):
 
 ## new redis commands
 
-being a Jedi Obi Wan knows the way of the force
+being a Jedi, Obi Wan knows the way of the force<br/>
 even when "Jedis" is [not yet upto date](https://github.com/redis/jedis/issues/2581) supporting new Redis commands:
 
 ```clojure
