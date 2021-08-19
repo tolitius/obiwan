@@ -59,7 +59,7 @@ hash
 sorted set
 
 ```clojure
-user=> (redis/zadd conn "planets" {"mercury" 1.0
+=> (redis/zadd conn "planets" {"mercury" 1.0
                                    "venus"   2.0
                                    "earth"   3.0
                                    "mars"    4.0
@@ -123,7 +123,7 @@ being a Jedi, Obi Wan knows the way of the force<br/>
 even when "Jedis" is [not yet upto date](https://github.com/redis/jedis/issues/2581) supporting new Redis commands:
 
 ```clojure
-dev=> (redis/hello conn)
+=> (redis/hello conn)
 {"role" "master",
  "server" "redis",
  "modules" [],
