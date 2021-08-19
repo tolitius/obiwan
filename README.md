@@ -8,6 +8,7 @@
 redis clojure client based on [jedis](https://github.com/redis/jedis).
 
 - [spilling the beans](#spilling-the-beans)
+- [new redis commands](#new-redis-commands)
 - [documentation](#documentation)
 - [license](#license)
 
@@ -114,6 +115,22 @@ looking inside the source (redis server):
 8) "neptune"
 9) "pluto"
 127.0.0.1:6379>
+```
+
+## new redis commands
+
+being a Jedi Obi Wan knows the way of the force
+even when "Jedis" is [not yet upto date](https://github.com/redis/jedis/issues/2581) supporting new Redis commands:
+
+```clojure
+dev=> (redis/hello conn)
+{"role" "master",
+ "server" "redis",
+ "modules" [],
+ "id" 571,
+ "mode" "standalone",
+ "version" "6.2.5",
+ "proto" 2}
 ```
 
 ## documentation

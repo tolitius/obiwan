@@ -1,5 +1,6 @@
 (ns obiwan.core
-  (:require [clojure.tools.logging :as log])
+  (:require [clojure.tools.logging :as log]
+            [obiwan.tools :as t])
   (:import [redis.clients.jedis Jedis
                                 Protocol
                                 JedisPool
@@ -44,6 +45,15 @@
    :idle-resources (.getNumIdle pool)})
 
 ;; wrap Java methods to make them composable
+
+;; new, not yet Jedis supported commands
+
+(defn hello [^JedisPool redis]
+  (let [cmd (t/make-protocol-command "HELLO")]
+    (->> (partial t/send-command cmd nil)
+         (op redis)
+         t/str-reply
+         (apply hash-map))))
 
 ;; hash
 
