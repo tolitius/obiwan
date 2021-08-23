@@ -31,10 +31,41 @@
     (if args
       (.sendCommand client cmd args)
       (.sendCommand client cmd))
-    (.getBinaryMultiBulkReply client)))  ;;TODO: take in the reply flavor
+    client))
 
-(defn str-reply [xs]
-  (mapv #(if (bytes? %)
-           (String. %)
-           %)
-        xs))
+(defn status-code-reply [client]
+  (.getStatusCodeReply client))
+
+(defn multi-bulk-reply [client]
+  (.getMultiBulkReply client))
+
+(defn binary-multi-bulk-reply [client]
+  (.getBinaryMultiBulkReply client))
+
+(defn bytes->str [bs]
+  (if (bytes? bs)
+    (String. bs)
+    bs))
+
+(defn bytes->map [bss]
+  (->> bss
+       (map bytes->str)
+       (apply hash-map)))
+
+(defn fmv
+  "apply f to each value v of map m"
+  [m f]
+  (into {}
+        (for [[k v] m]
+          [k (f v)])))
+
+(defn fmk
+  "apply f to each key k of map m"
+  [m f]
+  (into {}
+        (for [[k v] m]
+          [(f k) v])))
+
+(defn value? [v]
+  (or (number? v)
+      (seq v)))

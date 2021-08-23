@@ -60,14 +60,14 @@ sorted set
 
 ```clojure
 => (redis/zadd conn "planets" {"mercury" 1.0
-                                   "venus"   2.0
-                                   "earth"   3.0
-                                   "mars"    4.0
-                                   "jupiter" 5.0
-                                   "saturn"  6.0
-                                   "uranus"  7.0
-                                   "neptune" 8.0
-                                   "pluto"   9.0})
+                               "venus"   2.0
+                               "earth"   3.0
+                               "mars"    4.0
+                               "jupiter" 5.0
+                               "saturn"  6.0
+                               "uranus"  7.0
+                               "neptune" 8.0
+                               "pluto"   9.0})
 9
 
 => (redis/zrange conn "planets" 3 7)
@@ -126,8 +126,9 @@ even when "Jedis" is [not yet upto date](https://github.com/redis/jedis/issues/2
 => (redis/hello conn)
 {"role" "master",
  "server" "redis",
- "modules" [],
- "id" 571,
+ "modules" [{"name" "search",
+             "ver" 999999}],
+ "id" 23,
  "mode" "standalone",
  "version" "6.2.5",
  "proto" 2}

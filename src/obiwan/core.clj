@@ -49,11 +49,14 @@
 ;; new, not yet Jedis supported commands
 
 (defn hello [^JedisPool redis]
-  (let [cmd (t/make-protocol-command "HELLO")]
-    (->> (partial t/send-command cmd nil)
-         (op redis)
-         t/str-reply
-         (apply hash-map))))
+  (let [cmd (t/make-protocol-command "HELLO")
+        say-hello #(-> (t/send-command cmd nil %)
+                       t/binary-multi-bulk-reply)
+        reply (->> say-hello
+                   (op redis)
+                   t/bytes->map)
+        modules (mapv t/bytes->map (get reply "modules"))] ;; TODO: later recursive bytes->type
+    (assoc reply "modules" modules)))
 
 ;; hash
 
