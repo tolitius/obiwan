@@ -7,17 +7,29 @@
 
 redis clojure client based on [jedis](https://github.com/redis/jedis).
 
-- [spilling the beans](#spilling-the-beans)
+- [connect to a cluster](#connect-to-a-cluster)
+- [work with data structures](#work-with-data-structures)
+  - [hash](#hash)
+  - [sorted set](#sorted-set)
+  - [what's in redis](#whats-in-redis)
 - [redis search](#redis-search)
+  - [create the index](#create-the-index)
+  - [search the index](#search-the-index)
+  - [drop the index](#drop-the-index)
+  - [list indices](#list-indices)
 - [new redis commands](#new-redis-commands)
 - [documentation](#documentation)
+- [development](#development)
 - [license](#license)
 
-## spilling the beans
+## connect to a cluster
+
+Obi Wan relies on [JedisPool](https://www.javadoc.io/doc/redis.clients/jedis/latest/redis/clients/jedis/JedisPool.html) to connect to a cluster
+which means once the pool is created you'd have a collection of connections to work with.
+
+Let's try it out:
 
 ```clojure
-$ make repl
-
 => (require '[obiwan.core :as redis])
 
 ;; by default would connect to a local redis 127.0.0.1:6379 with a 42 thread connection pool
@@ -25,10 +37,40 @@ $ make repl
 #'user/conn
 
 => (redis/pool-stats conn)
-{:active-resources 0, :number-of-waiters 0, :idle-resources 0}
+;; {:active-resources 0,
+;;  :number-of-waiters 0,
+;;  :idle-resources 0}
 ```
 
-hash
+in order to connect to a different host, port, with a different number of threads, password, etc. `create-pool` takes a config:
+
+```clojure
+=> (def conn (redis/create-pool {:host "dotkam.com"
+                                 :port 4242
+                                 :timeout 42000
+                                 :pool {:size 4
+                                        :max-wait 15000}
+                                 :password "|th1s is the w@y|"}))
+#'user/conn
+```
+
+by default the config map is:
+
+```clojure
+{:host "127.0.0.1"
+ :port 6379
+ :timeout Protocol/DEFAULT_TIMEOUT ;; 2 seconds as per Jedis' protocol
+ :pool {:size 42
+        :max-wait 30000}}
+```
+
+## work with data structures
+
+the super power of redis is in its [data structures](https://redis.io/topics/data-types-intro).<br/>
+
+here are examples on how to work with some of them:
+
+### hash
 
 ```clojure
 => (redis/hmset conn "solar-system" {"mercury"  "0.33 x 10^24 kg"
@@ -57,7 +99,7 @@ hash
  "venus" "4.867 x 10^24 kg"}
 ```
 
-sorted set
+### sorted set
 
 ```clojure
 => (redis/zadd conn "planets" {"mercury" 1.0
@@ -77,6 +119,8 @@ sorted set
 => (redis/zrange conn "planets" 0 -1)
 #{"mercury" "venus" "earth" "mars" "jupiter" "saturn" "uranus" "neptune" "pluto"}
 ```
+
+### what's in redis
 
 looking inside the source (redis server):
 
@@ -120,13 +164,14 @@ looking inside the source (redis server):
 
 ## redis search
 
-redis comes with several great [modules](https://redis.io/modules). one of the best redis modules there is [redis search](https://github.com/RediSearch/RediSearch).
+redis comes with several great [modules](https://redis.io/modules).<br/>
+[redis search](https://github.com/RediSearch/RediSearch) adds querying, secondary indexing, full text, geo search, etc.. it's pretty great.
 
 Obi Wan does not depend on anything but [Jedis proper](https://github.com/redis/jedis) and follows the redis search [command reference](https://oss.redis.com/redisearch/Commands/) to implement the redis search module functionality.
 
-in order to play with redis search or other redis modules, do install and run them with your redis server. [here](https://oss.redis.com/redisearch/Quick_Start/) are some options.
+in order to play with redis search, or other redis modules, make sure they are [installed and run](https://oss.redis.com/redisearch/Quick_Start/) them with your redis server.
 
-now let's roll, it quite simple really:
+and embrace the force of redis search:
 
 ```clojure
 => (require '[obiwan.core :as redis]
@@ -135,7 +180,10 @@ now let's roll, it quite simple really:
 => (def conn (redis/create-pool))
 ```
 
-create a search index:
+### create the index
+
+in order to let redis know it needs to start building a search index based on certain key prefix(es)
+this search index needs to be created:
 
 ```clojure
 => (search/ft-create conn "solar-system"
@@ -145,7 +193,16 @@ create a search index:
                                #:numeric{:name "mass" :sortable? true}]})
 ```
 
-populate some documents that would hit the index (key prefixes):
+a couple things to note:
+
+* for the index "schema" a namespaced key map is used and validated against existing field types redis search supports
+* the whole index definition and schema is a single map that can be kept in configuration or/and sent over the network
+
+here is the full spec of the redis search native [FT.CREATE](https://oss.redis.com/redisearch/Commands/#ftcreate) command.
+
+### search the index
+
+in order to search the index we'll first add a few documents with key prefixes matching the index prefixes:
 
 ```clojure
 => (redis/hmset conn "solar:planet:earth" {"nick" "the blue planet"
@@ -163,7 +220,7 @@ populate some documents that would hit the index (key prefixes):
                                                  "mass" "1586000000000000000000"})
 ```
 
-and.. search:
+and.. we'll use `ft-search` function to search:
 
 ```clojure
 (search/ft-search conn "solar-system"
@@ -181,6 +238,11 @@ and.. search:
 ;;     "mass" "13090000000000000000000"}}]}
 ```
 
+this is the full spec of the redis search native [FT.SEARCH](https://oss.redis.com/redisearch/Commands/#ftsearch) command.<br/>
+also check out a very helpful query syntax reference in the redis search [docs](https://oss.redis.com/redisearch/Query_Syntax/).
+
+### list indices
+
 to list search indices:
 
 ```clojure
@@ -188,14 +250,21 @@ to list search indices:
 #{"solar-system"}
 ```
 
-to drop index:
+### drop the index
+
+to drop an index:
 
 ```clojure
 => (search/ft-drop-index conn "solar-system")
 ;; "OK"
 ```
 
-there is a pretty good query syntax reference in [the docs](https://oss.redis.com/redisearch/Query_Syntax/).
+or to also delete indexed hashes:
+
+```clojure
+=> (search/ft-drop-index conn "solar-system" {:dd? true})
+;; "OK"
+```
 
 ## new redis commands
 
@@ -204,14 +273,15 @@ even when "Jedis" is [not yet upto date](https://github.com/redis/jedis/issues/2
 
 ```clojure
 => (redis/hello conn)
-{"role" "master",
- "server" "redis",
- "modules" [{"name" "search",
-             "ver" 999999}],
- "id" 23,
- "mode" "standalone",
- "version" "6.2.5",
- "proto" 2}
+
+;; {"role" "master",
+;;  "server" "redis",
+;;  "modules" [{"name" "search",
+;;              "ver" 999999}],
+;;  "id" 23,
+;;  "mode" "standalone",
+;;  "version" "6.2.5",
+;;  "proto" 2}
 ```
 
 ## documentation
@@ -242,6 +312,18 @@ redis command documentation can be added via `dev/add-redis-docs` function:
 ;;                            {:name field, :type string}],
 ;;                :complexity O(1),
 ;;                :summary Get the value of a hash field}}
+```
+
+## development
+
+while Obi Wan does not require any particular version of Clojure to run<br/>
+since it's build is done via [tools.build](https://clojure.org/guides/tools_build)<br/>
+the minimum [1.10.3](https://clojure.org/releases/downloads#_stable_release_1_10_3_mar_4_2021) Clojure CLI is recommended.
+
+to fire up a development REPL:
+
+```bash
+make repl
 ```
 
 ## license

@@ -40,3 +40,13 @@
                      t/status-code-reply)]
     (->> drop-it
          (oc/op conn))))
+
+
+(mapv
+  [with-on-hold
+   with-due-date
+   with-reassigned
+   with-rework-requested
+   with-info-requested
+   with-info-provided
+   with-not-required])

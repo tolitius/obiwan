@@ -20,5 +20,5 @@
 (defn ft-drop-index
   ([conn index-name]
    (cmd/ft-drop-index conn index-name false))
-  ([conn index-name dd?]
+  ([conn index-name {:keys [dd?]}]
    (cmd/ft-drop-index conn index-name dd?)))
