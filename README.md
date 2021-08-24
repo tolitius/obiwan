@@ -8,6 +8,7 @@
 redis clojure client based on [jedis](https://github.com/redis/jedis).
 
 - [spilling the beans](#spilling-the-beans)
+- [redis search](#redis-search)
 - [new redis commands](#new-redis-commands)
 - [documentation](#documentation)
 - [license](#license)
@@ -117,10 +118,89 @@ looking inside the source (redis server):
 127.0.0.1:6379>
 ```
 
+## redis search
+
+redis comes with several great [modules](https://redis.io/modules). one of the best redis modules there is [redis search](https://github.com/RediSearch/RediSearch).
+
+Obi Wan does not depend on anything but [Jedis proper](https://github.com/redis/jedis) and follows the redis search [command reference](https://oss.redis.com/redisearch/Commands/) to implement the redis search module functionality.
+
+in order to play with redis search or other redis modules, do install and run them with your redis server. [here](https://oss.redis.com/redisearch/Quick_Start/) are some options.
+
+now let's roll, it quite simple really:
+
+```clojure
+=> (require '[obiwan.core :as redis]
+            '[obiwan.search.core :as search])
+
+=> (def conn (redis/create-pool))
+```
+
+create a search index:
+
+```clojure
+=> (search/ft-create conn "solar-system"
+                     {:prefix ["solar:planet:" "solar:planet:moon:"]
+                      :schema [#:text{:name "nick" :sortable? true}
+                               #:text{:name "age" :no-index? true}
+                               #:numeric{:name "mass" :sortable? true}]})
+```
+
+populate some documents that would hit the index (key prefixes):
+
+```clojure
+=> (redis/hmset conn "solar:planet:earth" {"nick" "the blue planet"
+                                           "age" "4.543 billion years"
+                                           "mass" "5974000000000000000000000"})
+=> (redis/hmset conn "solar:planet:mars" {"nick" "the red planet"
+                                          "age" "4.603 billion years"
+                                          "mass" "639000000000000000000000"})
+=> (redis/hmset conn "solar:planet:pluto" {"nick" "tombaugh regio"
+                                           "age" "4.5 billion years"
+                                           "mass" "13090000000000000000000"})
+=> (redis/hmset conn "solar:planet:moon:charon" {"planet" "pluto"
+                                                 "nick" "char"
+                                                 "age" "4.5 billion years"
+                                                 "mass" "1586000000000000000000"})
+```
+
+and.. search:
+
+```clojure
+(search/ft-search conn "solar-system"
+                       "@nick:re*")
+
+;; {:found 2,
+;;  :results
+;;  [{"solar:planet:mars"
+;;    {"age" "4.603 billion years",
+;;     "nick" "the red planet",
+;;     "mass" "639000000000000000000000"}}
+;;   {"solar:planet:pluto"
+;;    {"age" "4.5 billion years",
+;;     "nick" "tombaugh regio",
+;;     "mass" "13090000000000000000000"}}]}
+```
+
+to list search indices:
+
+```clojure
+=> (search/ft-list conn)
+#{"solar-system"}
+```
+
+to drop index:
+
+```clojure
+=> (search/ft-drop-index conn "solar-system")
+;; "OK"
+```
+
+there is a pretty good query syntax reference in [the docs](https://oss.redis.com/redisearch/Query_Syntax/).
+
 ## new redis commands
 
 being a Jedi, Obi Wan knows the way of the force<br/>
-even when "Jedis" is [not yet upto date](https://github.com/redis/jedis/issues/2581) supporting new Redis commands:
+even when "Jedis" is [not yet upto date](https://github.com/redis/jedis/issues/2581) Obi Wan can run new Redis commands:
 
 ```clojure
 => (redis/hello conn)

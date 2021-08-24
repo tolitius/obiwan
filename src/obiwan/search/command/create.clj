@@ -91,7 +91,7 @@
                 #{"tag"}       make-tag-field
                 (throw (RuntimeException. (str "can't add a field "
                                                field
-                                               "to the schema due to invalid field type " (t/map-ns field) ". "
+                                               " to the schema due to invalid field type " (t/map-ns field) ". "
                                                "valid types are " #{"text" "numeric" "geo" "tag"} ". "
                                                "example: " #:text{:name "foo", :sortable? true}))))]
     (-> field t/remove-key-ns (t/fmk keyword) maker)))
