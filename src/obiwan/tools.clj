@@ -1,7 +1,24 @@
 (ns obiwan.tools
-  (:import [redis.clients.jedis BinaryJedis]
+  (:require [clojure.string :as s])
+  (:import [redis.clients.jedis BinaryJedis Connection]
            [redis.clients.jedis.util SafeEncoder]
            [redis.clients.jedis.commands ProtocolCommand]))
+
+(defn super-public-method
+  "e.g. (super-public-method Connection
+                             client
+                             {:mname \"sendCommand\"
+                              :mparams \"interface redis.clients.jedis.commands.ProtocolCommand\"
+                             ...)
+   where 'client' is redis.clients.jedis.Client, a grand child of Connection"
+  [super-class obj {:keys [mname mparams]} & args]
+  (let [m (->> (.getDeclaredMethods super-class)
+               (filterv #(and (= mname   (.getName %))
+                              (= mparams (apply str (.getParameterTypes %)))))
+               first)]
+    (if (seq args)
+      (. m (invoke obj (into-array Object args)))
+      (. m (invoke obj)))))
 
 (defn super-private-method
   "e.g. (super-private-method BinaryJedis
@@ -29,9 +46,21 @@
   (let [client (.getClient conn)]
     (check-is-in-multi-or-pipeline conn)
     (if args
-      (.sendCommand client cmd args)
-      (.sendCommand client cmd))
+      (super-public-method Connection
+                           client
+                           {:mname "sendCommand"
+                            :mparams "interface redis.clients.jedis.commands.ProtocolCommandclass [Ljava.lang.String;"}
+                           cmd
+                           args)
+      (super-public-method Connection
+                           client
+                           {:mname "sendCommand"
+                            :mparams "interface redis.clients.jedis.commands.ProtocolCommand"}
+                           cmd))
     client))
+
+(defn integer-reply [client]
+  (.getIntegerReply client))
 
 (defn status-code-reply [client]
   (.getStatusCodeReply client))
@@ -46,6 +75,11 @@
   (if (bytes? bs)
     (String. bs)
     bs))
+
+(defn bytes->seq [bss]
+  (->> bss
+       (map bytes->str)
+       (apply vector)))
 
 (defn bytes->map [bss]
   (->> bss
@@ -66,6 +100,32 @@
         (for [[k v] m]
           [(f k) v])))
 
+(defn map-ns [m]
+  (->> m keys (map namespace) set))
+
+(defn remove-key-ns
+  ([m]
+   (fmk m name))
+  ([m kns]
+  (->> (filter (fn [[k v]] (not= (namespace k)
+                                 (name kns))) m)
+       (into {}))))
+
 (defn value? [v]
   (or (number? v)
       (seq v)))
+
+(defn xs->str
+  ([xs]
+   (xs->str xs " "))
+  ([xs separator]
+   (->> xs
+        (interpose separator)
+        (apply str))))
+
+(defn tokenize
+  ([xs]
+   (tokenize xs " "))
+  ([xs separator]
+   (s/split xs (re-pattern separator))))
+

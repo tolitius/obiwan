@@ -1,6 +1,8 @@
 (ns obiwan.search.command.create
-  (:require [obiwan.search.command.core :as cmd]
-            [obiwan.tools :as t]))
+  (:require [obiwan.core :as oc]
+            [obiwan.search.command.core :as cmd]
+            [obiwan.tools :as t])
+  (:import [redis.clients.jedis JedisPool]))
 
 ;; ------------------------
 ;; FT.CREATE
@@ -40,7 +42,7 @@
         {:valid? false
          :spec "if prefix is used it should not be empty"}))
   (redisify [param]
-    (str "PREFIX " (count prefixes) " " (apply str prefixes))))
+    (str "PREFIX " (count prefixes) " " (t/xs->str prefixes))))
 
 (deftype Field [fname ftype sortable? no-index?]
   cmd/Parameter
@@ -69,41 +71,62 @@
 (defn make-prefix [ps]
   (Prefix. ps))
 
-(defn make-text-field [{:keys [name no-stem? weight phonetic sortable? no-index?]}]
+(defn make-text-field [{:keys [name no-stem? weight phonetic sortable? no-index?] :as f}]
   (Field. name "TEXT" sortable? no-index?)) ;; TODO: add \"text\" opts support (no-stem?, weight, phonetic)
 
-(defn add-field
-  "polymorphism as is.."
-  [{:keys [type] :as field}]
-  (case type
-    :text    (make-text-field field)
-    ; :numeric
-    ; :geo
-    ; :tag
-    (throw (RuntimeException. (str "can't add a field "
-                                   field
-                                   "to the schema due to invalid field type [" type "]. "
-                                   "valid types are #{:text, :at glancenumeric, :geo, :tag}")))))
+(defn make-numeric-field [{:keys [name sortable? no-index?]}]
+  (Field. name "NUMERIC" sortable? no-index?))
 
-(defn create-index [iname {:keys [on
-                                  prefix
-                                  filter
-                                  language
-                                  language-field
-                                  score
-                                  score-field
-                                  payload-field
-                                  max-text-fields?
-                                  temporary
-                                  no-offsets?
-                                  no-hl?
-                                  no-fields?
-                                  no-freqs?
-                                  skip-initial-scan?
-                                  stop-words
-                                  schema]}]
-  (let [index-definition (cond-> {:index iname}
-                           (seq prefix) (assoc :prefix (make-prefix prefix)))
-        fields (mapv add-field schema)]
-    {:definition index-definition
-     :schema fields}))
+(defn make-geo-field [{:keys [name sortable? no-index?]}]
+  (Field. name "GEO" sortable? no-index?))
+
+(defn make-tag-field [{:keys [name separator sortable? no-index?]}]
+  (Field. name "GEO" sortable? no-index?)) ;; TODO: add \"tag\" opts support (separator)
+
+(defn add-field [field]
+  (let [maker (case (t/map-ns field)
+                #{"text"}      make-text-field
+                #{"numeric"}   make-numeric-field
+                #{"geo"}       make-geo-field
+                #{"tag"}       make-tag-field
+                (throw (RuntimeException. (str "can't add a field "
+                                               field
+                                               "to the schema due to invalid field type " (t/map-ns field) ". "
+                                               "valid types are " #{"text" "numeric" "geo" "tag"} ". "
+                                               "example: " #:text{:name "foo", :sortable? true}))))]
+    (-> field t/remove-key-ns (t/fmk keyword) maker)))
+
+(defn create-index [^JedisPool redis
+                    iname
+                    {:keys [on
+                            prefix
+                            filter
+                            language
+                            language-field
+                            score
+                            score-field
+                            payload-field
+                            max-text-fields?
+                            temporary
+                            no-offsets?
+                            no-hl?
+                            no-fields?
+                            no-freqs?
+                            skip-initial-scan?
+                            stop-words
+                            schema]}]
+  (let [index-definition (cond-> {}
+                           (seq prefix) (assoc :prefix (make-prefix prefix))
+                           ;; TODO: add other definitions opts
+                           )
+        fields (mapv add-field schema)
+        opts (->> [iname
+                   (-> index-definition vals cmd/redisify-params)
+                   "SCHEMA"
+                   (cmd/redisify-params fields)]
+                  t/xs->str
+                  t/tokenize
+                  (into-array String))
+        send-create #(-> (t/send-command cmd/FT_CREATE opts %)
+                         t/status-code-reply)]
+    (oc/op redis send-create)))
