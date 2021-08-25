@@ -5,7 +5,7 @@
 [![<! release](https://img.shields.io/badge/dynamic/json.svg?label=release&url=https%3A%2F%2Fclojars.org%2Fcom.tolitius%2Fobiwan%2Flatest-version.json&query=version&colorB=blue)](https://github.com/tolitius/obiwan/releases)
 [![<! clojars>](https://img.shields.io/clojars/v/com.tolitius/obiwan.svg)](https://clojars.org/com.tolitius/obiwan)
 
-redis clojure client based on [jedis](https://github.com/redis/jedis).
+redis/search clojure client based on [jedis](https://github.com/redis/jedis).
 
 - [connect to a cluster](#connect-to-a-cluster)
 - [work with data structures](#work-with-data-structures)
