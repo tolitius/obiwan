@@ -16,6 +16,7 @@
                (filterv #(and (= mname   (.getName %))
                               (= mparams (apply str (.getParameterTypes %)))))
                first)]
+    ;; (println "calling " m ", with params:" mparams ", and args:" args)
     (if (seq args)
       (. m (invoke obj (into-array Object args)))
       (. m (invoke obj (into-array Object []))))))
@@ -49,6 +50,7 @@
       (super-public-method Connection
                            client
                            {:mname "sendCommand"
+                            ; :mparams "interface redis.clients.jedis.commands.ProtocolCommandclass [[B"}
                             :mparams "interface redis.clients.jedis.commands.ProtocolCommandclass [Ljava.lang.String;"}
                            cmd
                            args)
@@ -70,6 +72,15 @@
 
 (defn binary-multi-bulk-reply [client]
   (.getBinaryMultiBulkReply client))
+
+(defn object-multi-bulk-reply [client]
+  (.getObjectMultiBulkReply client))
+
+(defn raw-object-multi-bulk-reply [client]
+  (.getRawObjectMultiBulkReply client))
+
+(defn unflushed-object-multi-bulk-reply [client]
+  (.getUnflushedObjectMultiBulkReply client))
 
 (defn bytes->str [bs]
   (if (bytes? bs)

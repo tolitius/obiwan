@@ -46,6 +46,24 @@
    :number-of-waiters (.getNumWaiters pool)
    :idle-resources (.getNumIdle pool)})
 
+;; send arbitrary command to the server
+(defn say
+  ([redis what]
+   (say redis what {}))
+  ([redis what {:keys [args expect parse]
+                 :or {expect t/status-code-reply
+                      parse identity}}]
+   (let [cmd (t/make-protocol-command what)
+         jargs (when args ;; TODO: deal with byte[] args
+                 (into-array String (if (sequential? args)
+                                      args
+                                      [args])))
+         say-it #(-> (t/send-command cmd jargs %)
+                     expect)]
+         (->> say-it
+              (op redis)
+              parse))))
+
 ;; new, not yet Jedis supported commands
 
 (defn hello [^JedisPool redis]

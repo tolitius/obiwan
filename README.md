@@ -20,6 +20,7 @@ redis/search clojure client based on [jedis](https://github.com/redis/jedis).
 - [new redis commands](#new-redis-commands)
 - [documentation](#documentation)
 - [development](#development)
+  - [send any redis commands](#send-any-redis-commands)
 - [license](#license)
 
 ## connect to a cluster
@@ -331,6 +332,46 @@ to fire up a development REPL:
 
 ```bash
 make repl
+```
+
+### send any redis commands
+
+this is usefult to experiment with various redis commands to see what they return, how to parse the responses as well as an ability to run any redis commands that may not be yet supported / wrapped in a clojure function.
+
+```clojure
+=> (redis/say conn "PING")
+;; "PONG"
+
+=> (redis/say conn "ECHO" {:args "HAYA!"})
+"HAYA!"
+
+```
+```clojure
+=> (print (redis/say conn "INFO"))
+
+;; # Server
+;; redis_version:6.2.5
+;; redis_git_sha1:00000000
+;; redis_git_dirty:0
+;; ...
+;; # CPU
+;; used_cpu_sys:84.315657
+;; used_cpu_user:50.403381
+;; ...
+;; # Modules
+;; module:name=search,ver=999999,api=1,filters=0,usedby=[],using=[],options=[]
+```
+
+parsing replies with `:expect` function:
+
+```clojure
+=> (redis/say conn "COMMAND" {:args "COUNT"
+                              :expect t/integer-reply})
+264
+```
+```clojure
+=> (redis/say conn "DBSIZE" {:expect t/integer-reply})
+42
 ```
 
 ## license

@@ -5,7 +5,10 @@
             [clojure.java.io :as io]
             [clojure.repl :refer :all]
             [clojure.pprint :refer [pprint]]
-            [spec :as rspec]))
+            [spec :as rspec]
+            [obiwan.core :as redis]
+            [obiwan.tools :as t]
+            [obiwan.search.core :as search]))
 
 (def spec (rspec/slurp-redis-spec))
 
@@ -29,9 +32,8 @@
   (require '[obiwan.core :as redis]
            '[obiwan.tools :as t]
            '[obiwan.search.command.create :as cc]
-           '[obiwan.search.command.search :as search]
-           '[obiwan.search.command.core :as cmd]
-           '[obiwan.search.core :as os])
+           '[obiwan.search.command.search :as cs]
+           '[obiwan.search.command.core :as cmd])
 
   (require '[obiwan.core :as redis]
            '[obiwan.search.core :as search])
