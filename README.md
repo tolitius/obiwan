@@ -64,6 +64,13 @@ by default the config map is:
         :max-wait 30000}}
 ```
 
+closing the pool:
+
+```clojure
+=> (redis/close-pool conn)
+;; :pool-closed
+```
+
 ## work with data structures
 
 the super power of redis is in its [data structures](https://redis.io/topics/data-types-intro).<br/>

@@ -33,8 +33,10 @@
 
 (defn close-pool [pool]
   (log/info "disconnecting from Redis:" pool)
-  (.destroy pool))
+  (.destroy pool)
+  :pool-closed)
 
+;; TODO: waiting on 4.x Jedis branch to open up the BaseGenericObjectPool getters
 (defn pool-stats [pool]
   {:active-resources (.getNumActive pool)
    ; :max-total (.getMaxTotal pool)
@@ -43,8 +45,6 @@
    ; :returned-count (.getReturnedCount pool)
    :number-of-waiters (.getNumWaiters pool)
    :idle-resources (.getNumIdle pool)})
-
-;; wrap Java methods to make them composable
 
 ;; new, not yet Jedis supported commands
 
@@ -57,6 +57,10 @@
                    t/bytes->map)
         modules (mapv t/bytes->map (get reply "modules"))] ;; TODO: later recursive bytes->type
     (assoc reply "modules" modules)))
+
+
+;; wrap Java methods to make them composable
+
 
 ;; hash
 

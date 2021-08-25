@@ -18,7 +18,7 @@
                first)]
     (if (seq args)
       (. m (invoke obj (into-array Object args)))
-      (. m (invoke obj)))))
+      (. m (invoke obj (into-array Object []))))))
 
 (defn super-private-method
   "e.g. (super-private-method BinaryJedis
