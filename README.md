@@ -339,6 +339,10 @@ make repl
 this is usefult to experiment with various redis commands to see what they return, how to parse the responses as well as an ability to run any redis commands that may not be yet supported / wrapped in a clojure function.
 
 ```clojure
+=> (require '[obiwan.tools :as t])
+```
+
+```clojure
 => (redis/say conn "PING")
 ;; "PONG"
 
