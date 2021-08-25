@@ -343,7 +343,7 @@ this is usefult to experiment with various redis commands to see what they retur
 ;; "PONG"
 
 => (redis/say conn "ECHO" {:args "HAYA!"})
-"HAYA!"
+;; "HAYA!"
 
 ```
 ```clojure
@@ -367,11 +367,11 @@ parsing replies with `:expect` function:
 ```clojure
 => (redis/say conn "COMMAND" {:args "COUNT"
                               :expect t/integer-reply})
-264
+;; 264
 ```
 ```clojure
 => (redis/say conn "DBSIZE" {:expect t/integer-reply})
-42
+;; 42
 ```
 
 ## license
