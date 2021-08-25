@@ -324,9 +324,9 @@ redis command documentation can be added via `dev/add-redis-docs` function:
 
 ## development
 
-while Obi Wan does not require any particular version of Clojure to run<br/>
-since it's build is done via [tools.build](https://clojure.org/guides/tools_build)<br/>
-the minimum [1.10.3](https://clojure.org/releases/downloads#_stable_release_1_10_3_mar_4_2021) Clojure CLI is recommended.
+while Obi Wan does not require any particular version of clojure to run<br/>
+since its build is done via [tools.build](https://clojure.org/guides/tools_build)<br/>
+the minimum [1.10.3](https://clojure.org/releases/downloads#_stable_release_1_10_3_mar_4_2021) clojure CLI is recommended.
 
 to fire up a development REPL:
 
