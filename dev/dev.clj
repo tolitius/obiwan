@@ -38,6 +38,7 @@
   (require '[obiwan.core :as redis]
            '[obiwan.search.core :as search])
 
+  ;; search core
   (def conn (redis/create-pool))
 
   (search/ft-create conn "solar-system"
@@ -53,4 +54,19 @@
 
   (search/ft-search conn "solar-system"
                          "@nick:re*")
+
+  ;; suggestions
+  (search/ft-sugadd conn "songs" "Don't Stop Me Now" 1 {:payload "Queen"})
+  (search/ft-sugadd conn "songs" "Rock You Like A Hurricane" 1 {:payload "Scorpions"})
+  (search/ft-sugadd conn "songs" "Fortunate Son" 1 {:payload "Creedence Clearwater Revival"})
+  (search/ft-sugadd conn "songs" "Thunderstruck" 1 {:payload "AC/DC"})
+  (search/ft-sugadd conn "songs" "All Along the Watchtower" 1 {:payload "Jimmy"})
+  (search/ft-sugadd conn "songs" "Enter Sandman" 1 {:payload "Metallica"})
+  (search/ft-sugadd conn "songs" "Free Bird" 1 {:payload "Lynyrd Skynyrd"})
+  (search/ft-sugadd conn "songs" "Immigrant Song" 1 {:payload "Led Zeppelin"})
+  (search/ft-sugadd conn "songs" "Smells Like Teen Spirit" 1 {:payload "Nirvana"})
+  (search/ft-sugadd conn "songs""Purple Haze" 1 {:payload "Jimmy"})
+
+  (pprint (search/ft-sugget conn "songs" "mm" {:fuzzy? true :max 42}))
+
   )

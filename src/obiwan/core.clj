@@ -1,6 +1,5 @@
 (ns obiwan.core
-  (:require [clojure.tools.logging :as log]
-            [obiwan.tools :as t])
+  (:require [obiwan.tools :as t])
   (:import [redis.clients.jedis Jedis
                                 Protocol
                                 JedisPool
@@ -28,11 +27,11 @@
    (let [conf (doto (JedisPoolConfig.)
                 (.setMaxTotal (pool :size))
                 (.setMaxWaitMillis (pool :max-wait)))]
-     (log/info (str "connecting to Redis " host ":" port ", timeout: " timeout ", pool: " pool))
+     (println (str "connecting to Redis " host ":" port ", timeout: " timeout ", pool: " pool))
      (JedisPool. conf ^String host ^int port ^int timeout ^String password))))
 
 (defn close-pool [pool]
-  (log/info "disconnecting from Redis:" pool)
+  (println "disconnecting from Redis:" pool)
   (.destroy pool)
   :pool-closed)
 
