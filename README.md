@@ -57,7 +57,7 @@ in order to connect to a different host, port, with a different number of thread
                                  :pool {:size 4
                                         :max-wait 15000}
                                  :password "|th1s is the w@y|"}))
-#'user/conn
+;; #'user/conn
 ```
 
 by default the config map is:
@@ -95,21 +95,23 @@ here are examples on how to work with some of them:
                                      "uranus"   "87 x 10^24 kg"
                                      "neptune"  "100 x 10^24 kg"
                                      "pluto"    "1.3 × 10^22 kg"})
-"OK"
+;; "OK"
 
 => (redis/hmget conn "solar-system" ["earth" "mars"])
-["5.972 x 10^24 kg" "0.65 x 10^24 kg"]
+
+;; ["5.972 x 10^24 kg" "0.65 x 10^24 kg"]
 
 => (redis/hgetall conn "solar-system")
-{"earth" "5.972 x 10^24 kg",
- "saturn" "570 x 10^24 kg",
- "jupiter" "1900 x 10^24 kg",
- "pluto" "1.3 × 10^22 kg",
- "uranus" "87 x 10^24 kg",
- "mercury" "0.33 x 10^24 kg",
- "neptune" "100 x 10^24 kg",
- "mars" "0.65 x 10^24 kg",
- "venus" "4.867 x 10^24 kg"}
+
+;; {"earth" "5.972 x 10^24 kg",
+;;  "saturn" "570 x 10^24 kg",
+;;  "jupiter" "1900 x 10^24 kg",
+;;  "pluto" "1.3 × 10^22 kg",
+;;  "uranus" "87 x 10^24 kg",
+;;  "mercury" "0.33 x 10^24 kg",
+;;  "neptune" "100 x 10^24 kg",
+;;  "mars" "0.65 x 10^24 kg",
+;;  "venus" "4.867 x 10^24 kg"}
 ```
 
 ### sorted set
@@ -124,13 +126,13 @@ here are examples on how to work with some of them:
                                "uranus"  7.0
                                "neptune" 8.0
                                "pluto"   9.0})
-9
+;; 9
 
 => (redis/zrange conn "planets" 3 7)
-#{"mars" "jupiter" "saturn" "uranus" "neptune"}
+;; #{"mars" "jupiter" "saturn" "uranus" "neptune"}
 
 => (redis/zrange conn "planets" 0 -1)
-#{"mercury" "venus" "earth" "mars" "jupiter" "saturn" "uranus" "neptune" "pluto"}
+;; #{"mercury" "venus" "earth" "mars" "jupiter" "saturn" "uranus" "neptune" "pluto"}
 ```
 
 ### what's in redis
@@ -260,7 +262,7 @@ to list search indices:
 
 ```clojure
 => (search/ft-list conn)
-#{"solar-system"}
+;; #{"solar-system"}
 ```
 
 ### drop the index
@@ -365,7 +367,7 @@ suggestions can be "measured" (how many suggestions live behind the key):
 
 ```clojure
 => (search/ft-suglen conn "songs")
-9
+;; 9
 ```
 
 ## new redis commands
