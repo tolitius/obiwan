@@ -6,6 +6,10 @@
 (defonce FT_SEARCH (t/make-protocol-command "FT.SEARCH"))
 (defonce FT__LIST (t/make-protocol-command "FT._LIST"))
 (defonce FT_DROPINDEX (t/make-protocol-command "FT.DROPINDEX"))
+(defonce FT_SUGADD (t/make-protocol-command "FT.SUGADD"))
+(defonce FT_SUGGET (t/make-protocol-command "FT.SUGGET"))
+(defonce FT_SUGDEL (t/make-protocol-command "FT.SUGDEL"))
+(defonce FT_SUGLEN (t/make-protocol-command "FT.SUGLEN"))
 
 (defprotocol Parameter
   (validate [param])
@@ -39,4 +43,50 @@
         drop-it #(-> (t/send-command FT_DROPINDEX args %)
                      t/status-code-reply)]
     (->> drop-it
+         (oc/op conn))))
+
+(defn ft-sugadd [conn k string score {:keys [incr? payload]}]
+  (let [;;TODO: add arg validation
+        args (->> (cond-> [k string (str score)]
+                    incr?   (conj "INCR")
+                    payload (conj "PAYLOAD" payload))
+                  (into-array String))
+        add-it #(-> (t/send-command FT_SUGADD args %)
+                    t/integer-reply)]
+    (->> add-it
+         (oc/op conn))))
+
+(defn ft-sugget [conn k prefix {:keys [fuzzy? with-scores? with-payloads? max]}]
+  (let [;;TODO: add arg validation
+        args (->> (cond-> [k prefix]
+                    fuzzy?          (conj "FUZZY")
+                    with-scores?    (conj "WITHSCORES")
+                    with-payloads?  (conj "WITHPAYLOADS")
+                    max             (conj "MAX" (str max)))
+                  (into-array String))
+        get-it #(-> (t/send-command FT_SUGGET args %)
+                    t/multi-bulk-reply)
+        sugs (->> get-it
+                  (oc/op conn))]
+    (cond
+      (and with-payloads?
+           with-scores?)  (->> sugs (partition 3) (mapv #(zipmap [:suggestion :score :payload] %)))
+      with-payloads?      (->> sugs (partition 2) (mapv #(zipmap [:suggestion :payload] %)))
+      with-scores?        (->> sugs (partition 2) (mapv #(zipmap [:suggestion :score] %)))
+      :else               (->> sugs (mapv #(zipmap [:suggestion] [%]))))))
+
+(defn ft-sugdel [conn k string]
+  (let [;;TODO: add arg validation
+        args (into-array String [k string])
+        add-it #(-> (t/send-command FT_SUGDEL args %)
+                    t/integer-reply)]
+    (->> add-it
+         (oc/op conn))))
+
+(defn ft-suglen [conn k]
+  (let [;;TODO: add arg validation
+        args (into-array String [k])
+        add-it #(-> (t/send-command FT_SUGLEN args %)
+                    t/integer-reply)]
+    (->> add-it
          (oc/op conn))))

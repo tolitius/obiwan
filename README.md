@@ -15,8 +15,13 @@ redis/search clojure client based on [jedis](https://github.com/redis/jedis).
 - [redis search](#redis-search)
   - [create the index](#create-the-index)
   - [search the index](#search-the-index)
-  - [drop the index](#drop-the-index)
   - [list indices](#list-indices)
+  - [drop the index](#drop-the-index)
+  - [work with suggestions](#work-with-suggestions)
+    - [add suggestions](#add-suggestions)
+    - [search suggestions](#search-suggestions)
+    - [delete suggestions](#delete-suggestions)
+    - [measure suggestions](#measure-suggestions)
 - [new redis commands](#new-redis-commands)
 - [documentation](#documentation)
 - [development](#development)
@@ -272,6 +277,95 @@ or to also delete indexed hashes:
 ```clojure
 => (search/ft-drop-index conn "solar-system" {:dd? true})
 ;; "OK"
+```
+
+### work with suggestions
+
+redis search has 4 commands to work with suggestions (a.k.a. autocomplete):
+
+* [FT.SUGADD](https://oss.redis.com/redisearch/Commands/#ftsugadd) adds a suggestion string to an auto-complete suggestion dictionary
+* [FT.SUGGET](https://oss.redis.com/redisearch/Commands/#ftsugget) gets completion suggestions for a prefix
+* [FT.SUGDEL](https://oss.redis.com/redisearch/Commands/#ftsugdel) deletes a string from a suggestion index
+* [FT.SUGLEN](https://oss.redis.com/redisearch/Commands/#ftsuglen) gets the size of an auto-complete suggestion dictionary
+
+one difference from a search index is that these suggestions are left to the user to maintain: i.e. add and remove
+
+#### add suggestions
+
+let's add a few suggestions and then try to search (or "get") them:
+
+```clojure
+=> (search/ft-sugadd conn "songs" "Don't Stop Me Now" 1 {:payload "Queen"})
+   (search/ft-sugadd conn "songs" "Rock You Like A Hurricane" 1 {:payload "Scorpions"})
+   (search/ft-sugadd conn "songs" "Fortunate Son" 1 {:payload "Creedence Clearwater Revival"})
+   (search/ft-sugadd conn "songs" "Thunderstruck" 1 {:payload "AC/DC"})
+   (search/ft-sugadd conn "songs" "All Along the Watchtower" 1 {:payload "Jimmy"})
+   (search/ft-sugadd conn "songs" "Enter Sandman" 1 {:payload "Metallica"})
+   (search/ft-sugadd conn "songs" "Free Bird" 1 {:payload "Lynyrd Skynyrd"})
+   (search/ft-sugadd conn "songs" "Immigrant Song" 1 {:payload "Led Zeppelin"})
+   (search/ft-sugadd conn "songs" "Smells Like Teen Spirit" 1 {:payload "Nirvana"})
+   (search/ft-sugadd conn "songs" "Purple Haze" 1 {:payload "Jimmy"})
+```
+
+following the redis command [spec](https://oss.redis.com/redisearch/Commands/#ftsugadd), besides a redis connection pool,
+at a minimum `ft-sugadd` takes:
+
+* `key`    : the suggestion dictionary key
+* `string` : the suggestion string we index
+* `score`  : a floating point number of the suggestion string's weight
+
+and will take optional args:
+
+* `incr?`         : if true, we increment the existing entry of the suggestion by the given score, instead of replacing the score. This is useful for updating the dictionary based on user queries in real time
+* `payload value` : If set, we save an extra payload with the suggestion, that can be fetched by adding the WITHPAYLOADS argument to FT.SUGGET
+
+#### search suggestions
+
+now let's search through the suggestions:
+
+```clojure
+=> (search/ft-sugget conn "songs" "don")
+;; [{:suggestion "Don't Stop Me Now"}]
+```
+
+by [the spec](https://oss.redis.com/redisearch/Commands/#ftsugget) `ft-get` optinally also takes:
+
+* `fuzzy?`          : if true, we do a fuzzy prefix search, including prefixes at Levenshtein distance of 1 from the prefix sent
+* `max` num         : if set, we limit the results to a maximum of num (default: 5).
+* `with-scores?`    : if true, we also return the score of each suggestion. this can be used to merge results from multiple instances
+* `with-payloads?`  : if true, we return optional payloads saved along with the suggestions.
+
+let's try them all together:
+
+```clojure
+=> (search/ft-sugget conn "songs" "mm" {:fuzzy? true
+                                        :with-payloads? true
+                                        :with-scores? true
+                                        :max 42}))
+;; [{:suggestion "Immigrant Song",
+;;   :score "0.037535253912210464",
+;;   :payload "Led Zeppelin"}
+;;  {:suggestion "Smells Like Teen Spirit",   ;; Levenshtein distance of 1 "mm" => "m"
+;;   :score "0.028853578492999077",
+;;   :payload "Nirvana"}]
+```
+
+#### delete suggestions
+
+suggestions can be deleted with `ft-sugdel`:
+
+```clojure
+=> (search/ft-sugdel conn "songs" "Fortunate Son")
+;; 1
+```
+
+#### measure suggestions
+
+suggestions can be "measured" (how many suggestions live behind the key):
+
+```clojure
+=> (search/ft-suglen conn "songs")
+9
 ```
 
 ## new redis commands

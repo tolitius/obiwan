@@ -22,3 +22,21 @@
    (cmd/ft-drop-index conn index-name false))
   ([conn index-name {:keys [dd?]}]
    (cmd/ft-drop-index conn index-name dd?)))
+
+(defn ft-sugadd
+  ([conn k string score]
+   (ft-sugadd conn k string score {}))
+  ([conn k string score opts]
+   (cmd/ft-sugadd conn k string score opts)))
+
+(defn ft-sugget
+  ([conn k prefix]
+   (ft-sugget conn k prefix {}))
+  ([conn k prefix opts]
+   (cmd/ft-sugget conn k prefix opts)))
+
+(defn ft-sugdel [conn k string]
+  (cmd/ft-sugdel conn k string))
+
+(defn ft-suglen [conn k]
+  (cmd/ft-suglen conn k))
