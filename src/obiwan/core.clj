@@ -136,6 +136,23 @@
   (op redis #(.srem % s (into-array
                          String [v]))))
 
+;; basic operations
+
+(defn set [redis k v]
+  (.set redis k v))
+
+(defn get [redis k]
+  (.get redis k))
+
+(defn del [redis k]
+  (.del redis k))
+
+(defn exists [redis & v]
+  (.exists redis v))
+
+(defn type [redis k]
+  (.type redis k))
+
 ;; scaning things
 
 (defn new-scan-params [{:keys [fetch-size pattern]
