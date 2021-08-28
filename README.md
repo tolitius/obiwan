@@ -26,6 +26,7 @@ redis/search clojure client based on [jedis](https://github.com/redis/jedis).
 - [documentation](#documentation)
 - [development](#development)
   - [send any redis commands](#send-any-redis-commands)
+  - [run/add tests](#runadd-tests)
 - [license](#license)
 
 ## connect to a cluster
@@ -475,6 +476,12 @@ parsing replies with `:expect` function:
 ```clojure
 => (redis/say conn "DBSIZE" {:expect t/integer-reply})
 ;; 42
+```
+
+### run/add tests
+
+```bash
+$ make test
 ```
 
 ## license

@@ -1,4 +1,4 @@
-.PHONY: clean jar outdated install deploy tree repl
+.PHONY: clean jar outdated install deploy tree test repl
 
 clean:
 	clojure -Sforce -T:build clean
@@ -18,6 +18,9 @@ deploy: jar
 tree:
 	clojure -Xdeps tree
 
+test:
+	clojure -X:test :patterns '[".*test"]'
+
 ## does not work with "-M"s ¯\_(ツ)_/¯
 repl:
-	clojure -A:dev -A:repl
+	clojure -A:dev -A:test -A:repl

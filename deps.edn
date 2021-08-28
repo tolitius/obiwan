@@ -8,7 +8,15 @@
                                                              :git/tag "v0.1.9"}
 
                               clj-http/clj-http {:mvn/version "3.12.3"}}}
-           :repl {:extra-deps {nrepl/nrepl {:mvn/version "0.7.0"}
+           :test {:extra-paths ["test" "test/resources"]
+                  :extra-deps {it.ozimov/embedded-redis {:mvn/version "0.7.3"}
+                               tolitius/yang {:mvn/version "0.1.28"}
+                               io.github.cognitect-labs/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
+                                                                     :sha "e7660458ce25bc4acb4ccc3e2415aae0a4907198"}}
+                  :main-opts ["-m" "cognitect.test-runner"]
+                  :exec-fn cognitect.test-runner.api/test}
+           :repl {:extra-paths ["test" "test/resources"]
+                  :extra-deps {nrepl/nrepl {:mvn/version "0.7.0"}
                                cider/cider-nrepl {:mvn/version "0.22.4"}
                                com.bhauman/rebel-readline {:mvn/version "0.1.4"}}
                   :main-opts ["-e" "(require 'dev)(in-ns 'dev)"
