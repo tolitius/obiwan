@@ -139,19 +139,40 @@
 ;; basic operations
 
 (defn set [redis k v]
-  (.set redis k v))
+  (op redis #(.set % k v)))
+
+(defn mset [redis & kv]
+  (op redis #(.mset % (into-array kv))))
 
 (defn get [redis k]
-  (.get redis k))
+  (op redis #(.get % k)))
 
-(defn del [redis k]
-  (.del redis k))
+(defn mget [redis & k]
+  (op redis #(.mget % (into-array k))))
+
+(defn del [redis & k]
+  (op redis #(.del % (into-array k))))
 
 (defn exists [redis & v]
-  (.exists redis v))
+  (op redis #(.exists % (into-array v))))
 
 (defn type [redis k]
-  (.type redis k))
+  (op redis #(.type % k)))
+
+(defn keys [redis k]
+  (op redis #(.keys % k)))
+
+(defn incr [redis k]
+  (op redis #(.incr % k)))
+
+(defn incr-by [redis k v]
+  (op redis #(.incrBy % k v)))
+
+(defn decr [redis k]
+  (op redis #(.decr % k)))
+
+(defn decr-by [redis k v]
+  (op redis #(.decrBy % k v)))
 
 ;; scaning things
 

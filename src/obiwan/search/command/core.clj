@@ -4,7 +4,7 @@
 
 (defonce FT_CREATE (t/make-protocol-command "FT.CREATE"))
 (defonce FT_SEARCH (t/make-protocol-command "FT.SEARCH"))
-(defonce FT_LIST (t/make-protocol-command "FT._LIST"))
+(defonce FT__LIST (t/make-protocol-command "FT._LIST"))
 (defonce FT_DROPINDEX (t/make-protocol-command "FT.DROPINDEX"))
 (defonce FT_SUGADD (t/make-protocol-command "FT.SUGADD"))
 (defonce FT_SUGGET (t/make-protocol-command "FT.SUGGET"))
@@ -30,7 +30,7 @@
 ;;
 
 (defn ft-list [conn]
-  (let [ask-for-list #(-> (t/send-command FT_LIST nil %)
+  (let [ask-for-list #(-> (t/send-command FT__LIST nil %)
                           t/binary-multi-bulk-reply)]
     (->> ask-for-list
          (oc/op conn)
