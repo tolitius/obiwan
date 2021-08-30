@@ -81,7 +81,8 @@
         reply (->> say-hello
                    (op redis)
                    t/bytes->map)
-        modules (mapv t/bytes->map (get reply "modules"))] ;; TODO: later recursive bytes->type
+        modules (mapv t/bytes->map
+                      (clojure.core/get reply "modules"))] ;; TODO: later recursive bytes->type
     (assoc reply "modules" modules)))
 
 
