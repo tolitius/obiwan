@@ -88,6 +88,9 @@
 
 ;; wrap Java methods to make them composable
 
+;; check whether creating a function every time in (op redis #(this)) affects performance / GC collections
+;; only _iff_ it is of any significance precreate these
+;;      no matter the solution the public redis functions should remain _composable_
 
 ;; hash
 

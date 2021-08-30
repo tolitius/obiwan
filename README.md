@@ -484,6 +484,8 @@ parsing replies with `:expect` function:
 $ make test
 ```
 
+when running tests, make sure the [embedded redis config](test/resources/config.edn#L4) matches your OS.
+
 ## license
 
 Copyright © 2021 tolitius
