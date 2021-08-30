@@ -1,4 +1,5 @@
 (ns obiwan.core
+  (:refer-clojure :exclude [get set type keys])
   (:require [obiwan.tools :as t])
   (:import [redis.clients.jedis Jedis
                                 Protocol
