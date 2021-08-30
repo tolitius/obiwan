@@ -6,6 +6,7 @@
                                 JedisPoolConfig
                                 ScanParams
                                 ScanResult]
+           [redis.clients.jedis.exceptions JedisConnectionException]
            [org.apache.commons.pool2.impl GenericObjectPool]))
 
 (defn new-conn [^JedisPool pool]
@@ -34,6 +35,13 @@
   (println "disconnecting from Redis:" pool)
   (.destroy pool)
   :pool-closed)
+
+(defn connected? [pool]
+  (try
+    (op pool (fn [_] true))
+    (catch JedisConnectionException ex
+      (println ex)
+      false)))
 
 ;; TODO: waiting on 4.x Jedis branch to open up the BaseGenericObjectPool getters
 (defn pool-stats [pool]

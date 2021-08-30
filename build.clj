@@ -8,7 +8,7 @@
 
 (defonce project
   (let [lib        'com.tolitius/obiwan
-        version    "0.1.43"
+        version    "0.1.44"
         target-dir "target"]
     {:lib lib
      :description "redis clojure client based on jedis"
@@ -53,11 +53,8 @@
     :or {installer :remote
          sign-releases? true}}]
   (let [{:keys [jar-file class-dir lib version]} project
-        ;; pom.xml is currently written by tools.build to
-        ;; https://github.com/clojure/tools.build/blob/1fcbe869c988d1d5f9e7d2518bdb4fa2391ccfca/src/main/clojure/clojure/tools/build/tasks/write_pom.clj#L236
-        pom-file (str class-dir "/META-INF/maven/" (namespace lib) "/" (name lib) "/pom.xml")
+        pom-file (b/pom-path {:lib lib :class-dir class-dir})
         pom-asc  (str (name lib) "-" version ".pom.asc")]
-
     (deploy/deploy {:installer installer
                     :sign-releases? sign-releases?
                     :pom-file pom-file

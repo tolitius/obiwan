@@ -1,0 +1,4 @@
+{:redis
+ {:server {:path "/usr/local/bin/redis-server"
+           :port 4242
+           :os "MAC_OS_X"}}} ;; should match https://github.com/ozimov/embedded-redis/blob/master/src/main/java/redis/embedded/util/OS.java
