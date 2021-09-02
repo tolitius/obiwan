@@ -281,8 +281,8 @@ and.. we'll use `ft-search` function to search:
 ;;     "mass" "13090000000000000000000"}}]}
 ```
 
-Morpheus: "blue OR red?"
-Neo: both
+> _Morpheus: "blue OR red?"_<br/>
+> _Neo: "both"_
 
 ```clojure
 => (search/ft-search conn "solar-system" "blue | red")
