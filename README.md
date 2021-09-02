@@ -281,6 +281,24 @@ and.. we'll use `ft-search` function to search:
 ;;     "mass" "13090000000000000000000"}}]}
 ```
 
+Morpheus: "blue OR red?"
+Neo: both
+
+```clojure
+=> (search/ft-search conn "solar-system" "blue | red")
+
+;; {:found 2,
+;;  :results
+;;  [{"solar:planet:earth"
+;;    {"age" "4.543 billion years",
+;;     "nick" "the blue planet",
+;;     "mass" "5974000000000000000000000"}}
+;;   {"solar:planet:mars"
+;;    {"age" "4.603 billion years",
+;;     "nick" "the red planet",
+;;     "mass" "639000000000000000000000"}}]}
+```
+
 this is the full spec of the redis search native [FT.SEARCH](https://oss.redis.com/redisearch/Commands/#ftsearch) command.<br/>
 also check out a very helpful query syntax reference in the redis search [docs](https://oss.redis.com/redisearch/Query_Syntax/).
 
