@@ -181,9 +181,9 @@ looking inside the source (redis server):
 
 ## run commands in a pipeline
 
-redis supports running [commands in a pipeling](https://redis.io/topics/pipelining) to speed up queries.
+redis supports [pipelining](https://redis.io/topics/pipelining) to speed up client queries.
 
-in order to run commands in a pipeline we can collect commands we want to run:
+in order to run queries in a pipeline we can create a set of commands at runtime:
 
 ```clojure
 => (def commands [(redis/hset "numbers" {"1" "one" "2" "two" "3" "three"})
@@ -193,9 +193,9 @@ in order to run commands in a pipeline we can collect commands we want to run:
 ;; #'dev/commands
 ```
 
-notice we did not pass a connection / pool, but just creating command functions.
+notice we did not pass a connection pool, but just created a few command functions
 
-once all the commands are collected / created at runtime we can run them in a pipeline:
+which can now be run in a single pipeline on redis servers:
 
 ```clojure
 => (redis/pipeline conn commands)
