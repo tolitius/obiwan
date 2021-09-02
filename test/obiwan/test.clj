@@ -55,5 +55,19 @@
          numbers
          letters]        (redis/pipeline tt/conn commands))))
 
+(deftest should-zadd-and-zrange
+  (let [planets {"mercury" 1.0
+                 "venus"   2.0
+                 "earth"   3.0
+                 "mars"    4.0
+                 "jupiter" 5.0
+                 "saturn"  6.0
+                 "uranus"  7.0
+                 "neptune" 8.0
+                 "pluto"   9.0}]
+    (is (count planets) (redis/zadd tt/conn "planets" planets))
+    (is #{"mars" "jupiter" "saturn" "uranus" "neptune"} (redis/zrange tt/conn "planets" 3 7))
+    (is (-> planets keys set) (redis/zrange tt/conn "planets" 0 -1))))
+
 (defn run-tests []
   (t/run-all-tests #"obiwan.test.*"))

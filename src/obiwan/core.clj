@@ -1,6 +1,7 @@
 (ns obiwan.core
   (:refer-clojure :exclude [get set type keys])
-  (:require [obiwan.tools :as t])
+  (:require [obiwan.commands :as c]
+            [obiwan.tools :as t])
   (:import [redis.clients.jedis Jedis
                                 Protocol
                                 JedisPool
@@ -85,77 +86,54 @@
                       (clojure.core/get reply "modules"))] ;; TODO: later recursive bytes->type
     (assoc reply "modules" modules)))
 
-
-;; wrap Java methods to make them composable
-
-;; check whether creating a function every time in (op redis #(this)) affects performance / GC collections
-;; only _iff_ it is of any significance precreate these
-;;      no matter the solution the public redis functions should remain _composable_
-;;      but.. pipelining commands should solve most if not all
-
-;; the private redis command functions that are decoupled from redis connection enable pipeling
-;; i.e. to build command functions at runtime and then be passed into a pipeline
-;; TODO: enable pipelining for all fns (sets, sorted sets, etc..)
+;; TODO: add comman options (most likely via a function that would add options)
+;;       to preserve the "direct" and "pipelining" interfaces
 
 ;; hash
-
-(defn- -hget- [h f]
-  #(.hget % h f))
-
-(defn- -hset- [h m]
-  #(.hset % h m))
-
-(defn- -hmget- [h fs]
-  #(.hmget % h (into-array String fs)))
-
-(defn- -hmset- [h m]
-  #(.hmset % h m))
-
-(defn- -hgetall- [h]
-  #(.hgetAll % h))
-
-(defn- -hdel- [h vs]
-  #(.hdel % h (into-array String vs)))
 
 (defn ^{:doc {:obiwan-doc
               "takes in a jedis connection pool, a hash name and a field name if present, returns a field name value"}}
   hget
-  ([h f] (-hget- h f))
+  ([h f] (c/hget h f))
   ([^JedisPool redis h f]
-   (op redis (-hget- h f))))
+   (op redis (c/hget h f))))
 
 (defn hset
-  ([h m] (-hset- h m))
+  ([h m] (c/hset h m))
   ([redis h m]
-   (op redis (-hset- h m))))
+   (op redis (c/hset h m))))
 
 (defn hmget
-  ([h fs] (-hmget- h fs))
+  ([h fs] (c/hmget h fs))
   ([^JedisPool redis h fs]
-   (into [] (op redis (-hmget- h fs)))))
+   (into [] (op redis (c/hmget h fs)))))
 
 (defn hmset
-  ([h m] (-hmset- h m))
+  ([h m] (c/hmset h m))
   ([redis h m]
-   (op redis (-hmset- h m))))
+   (op redis (c/hmset h m))))
 
 (defn hgetall
-  ([h] (-hgetall- h))
+  ([h] (c/hgetall h))
   ([^JedisPool redis h]
-   (into {} (op redis (-hgetall- h)))))
+   (into {} (op redis (c/hgetall h)))))
 
 (defn hdel
-  ([h vs] (-hdel- h vs))
+  ([h vs] (c/hdel h vs))
   ([redis h vs]
-   (op redis (-hdel- h vs))))
+   (op redis (c/hdel h vs))))
 
 ;; sorted set
 
-(defn zadd [redis s m]
-  (op redis #(.zadd % s m)))
+(defn zadd
+  ([k m] (c/zadd k m))
+  ([redis k m]
+   (op redis #(.zadd % k m))))
 
-(defn zrange [redis s zmin zmax]
-  (op redis #(.zrange % s zmin zmax)))
+(defn zrange
+  ([k zmin zmax] (c/zrange k zmin zmax))
+  ([redis k zmin zmax]
+   (op redis #(.zrange % k zmin zmax))))
 
 ;; set
 
