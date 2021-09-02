@@ -1,4 +1,5 @@
-(ns obiwan.commands)
+(ns obiwan.commands
+  (:refer-clojure :exclude [get set type keys]))
 
 ;; wrap Java methods to make them composable
 
@@ -10,9 +11,7 @@
 ;; these command functions are decoupled from redis connection to enable pipeling
 ;; i.e. to build command functions at runtime and then be passed into a pipeline
 
-;; TODO:
-;;       * enable pipelining for all fns (sets, sorted sets, etc..)
-;;       * add an options map
+;; TODO: add an "options" map
 
 ;; hash
 
@@ -41,3 +40,60 @@
 
 (defn zrange [k zmin zmax]
   #(.zrange % k zmin zmax))
+
+;; set
+
+(defn smembers [s]
+  #(.smembers % s))
+
+(defn scard [s]
+  #(.scard % s))
+
+(defn sismember [s v]
+  #(.sismember % s v))
+
+(defn sadd [s vs]
+  #(.sadd % s (into-array
+                String vs)))
+
+(defn srem [s vs]
+  #(.srem % s (into-array
+                String vs)))
+
+;; basic operations
+
+(defn set [k v]
+  #(.set % k v))
+
+(defn mset [kv]
+  #(.mset % (into-array kv)))
+
+(defn get [k]
+  #(.get % k))
+
+(defn mget [ks]
+  #(.mget % (into-array ks)))
+
+(defn del [ks]
+  #(.del % (into-array ks)))
+
+(defn exists [vs]
+  #(.exists % (into-array vs)))
+
+(defn type [k]
+  #(.type % k))
+
+(defn keys [k]
+  #(.keys % k))
+
+(defn incr [k]
+  #(.incr % k))
+
+(defn incr-by [k v]
+  #(.incrBy % k v))
+
+(defn decr [k]
+  #(.decr % k))
+
+(defn decr-by [k v]
+  #(.decrBy % k v))

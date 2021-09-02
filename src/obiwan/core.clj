@@ -88,6 +88,8 @@
 
 ;; TODO: add comman options (most likely via a function that would add options)
 ;;       to preserve the "direct" and "pipelining" interfaces
+;;
+;;       add pipelining to basic commands
 
 ;; hash
 
@@ -137,22 +139,30 @@
 
 ;; set
 
-(defn smembers [redis s]
-  (op redis #(.smembers % s)))
+(defn smembers
+  ([s] (c/smembers s))
+  ([redis s]
+   (op redis (c/smembers s))))
 
-(defn scard [redis s]
-  (op redis #(.scard % s)))
+(defn scard
+  ([s] (c/scard s))
+  ([redis s]
+   (op redis (c/scard s))))
 
-(defn sismember [redis s v]
-  (op redis #(.sismember % s v)))
+(defn sismember
+  ([s v] (c/smembers s v))
+  ([redis s v]
+   (op redis (c/smembers s v))))
 
-(defn sadd [redis s vs]
-  (op redis #(.sadd % s (into-array
-                          String vs))))
+(defn sadd
+  ([s vs] (c/sadd s vs))
+  ([redis s vs]
+   (op redis (c/sadd s vs))))
 
-(defn srem [redis s vs]
-  (op redis #(.srem % s (into-array
-                         String vs))))
+(defn srem
+  ([s vs] (c/srem s vs))
+  ([redis s vs]
+   (op redis (c/srem s vs))))
 
 ;; basic operations
 
