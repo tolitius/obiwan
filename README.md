@@ -12,6 +12,7 @@ redis/search clojure client based on [jedis](https://github.com/redis/jedis).
   - [hash](#hash)
   - [sorted set](#sorted-set)
   - [what's in redis](#whats-in-redis)
+- [run commands in a pipeline](#run-commands-in-a-pipeline)
 - [redis search](#redis-search)
   - [create the index](#create-the-index)
   - [search the index](#search-the-index)
@@ -87,15 +88,15 @@ here are examples on how to work with some of them:
 ### hash
 
 ```clojure
-=> (redis/hmset conn "solar-system" {"mercury"  "0.33 x 10^24 kg"
-                                     "venus"    "4.867 x 10^24 kg"
-                                     "earth"    "5.972 x 10^24 kg"
-                                     "mars"     "0.65 x 10^24 kg"
-                                     "jupiter"  "1900 x 10^24 kg"
-                                     "saturn"   "570 x 10^24 kg"
-                                     "uranus"   "87 x 10^24 kg"
-                                     "neptune"  "100 x 10^24 kg"
-                                     "pluto"    "1.3 × 10^22 kg"})
+=> (redis/hset conn "solar-system" {"mercury"  "0.33 x 10^24 kg"
+                                    "venus"    "4.867 x 10^24 kg"
+                                    "earth"    "5.972 x 10^24 kg"
+                                    "mars"     "0.65 x 10^24 kg"
+                                    "jupiter"  "1900 x 10^24 kg"
+                                    "saturn"   "570 x 10^24 kg"
+                                    "uranus"   "87 x 10^24 kg"
+                                    "neptune"  "100 x 10^24 kg"
+                                    "pluto"    "1.3 × 10^22 kg"})
 ;; "OK"
 
 => (redis/hmget conn "solar-system" ["earth" "mars"])
@@ -178,6 +179,32 @@ looking inside the source (redis server):
 127.0.0.1:6379>
 ```
 
+## run commands in a pipeline
+
+redis supports running [commands in a pipeling](https://redis.io/topics/pipelining) to speed up queries.
+
+in order to run commands in a pipeline we can collect commands we want to run:
+
+```clojure
+=> (def commands [(redis/hset "numbers" {"1" "one" "2" "two" "3" "three"})
+                  (redis/hset "letters" {"a" "ey" "b" "bee" "c" "cee"})
+                  (redis/hgetall "numbers")
+                  (redis/hgetall "letters")])
+;; #'dev/commands
+```
+
+notice we did not pass a connection / pool, but just creating command functions.
+
+once all the commands are collected / created at runtime we can run them in a pipeline:
+
+```clojure
+=> (redis/pipeline conn commands)
+;; [3
+;;  3
+;;  {"1" "one", "2" "two", "3" "three"}
+;;  {"a" "ey", "b" "bee", "c" "cee"}]
+```
+
 ## redis search
 
 redis comes with several great [modules](https://redis.io/modules).<br/>
@@ -221,19 +248,19 @@ here is the full spec of the redis search native [FT.CREATE](https://oss.redis.c
 in order to search the index we'll first add a few documents with key prefixes matching the index prefixes:
 
 ```clojure
-=> (redis/hmset conn "solar:planet:earth" {"nick" "the blue planet"
-                                           "age" "4.543 billion years"
-                                           "mass" "5974000000000000000000000"})
-=> (redis/hmset conn "solar:planet:mars" {"nick" "the red planet"
-                                          "age" "4.603 billion years"
-                                          "mass" "639000000000000000000000"})
-=> (redis/hmset conn "solar:planet:pluto" {"nick" "tombaugh regio"
-                                           "age" "4.5 billion years"
-                                           "mass" "13090000000000000000000"})
-=> (redis/hmset conn "solar:planet:moon:charon" {"planet" "pluto"
-                                                 "nick" "char"
-                                                 "age" "4.5 billion years"
-                                                 "mass" "1586000000000000000000"})
+=> (redis/hset conn "solar:planet:earth" {"nick" "the blue planet"
+                                          "age" "4.543 billion years"
+                                          "mass" "5974000000000000000000000"})
+=> (redis/hset conn "solar:planet:mars" {"nick" "the red planet"
+                                         "age" "4.603 billion years"
+                                         "mass" "639000000000000000000000"})
+=> (redis/hset conn "solar:planet:pluto" {"nick" "tombaugh regio"
+                                          "age" "4.5 billion years"
+                                          "mass" "13090000000000000000000"})
+=> (redis/hset conn "solar:planet:moon:charon" {"planet" "pluto"
+                                                "nick" "char"
+                                                "age" "4.5 billion years"
+                                                "mass" "1586000000000000000000"})
 ```
 
 and.. we'll use `ft-search` function to search:

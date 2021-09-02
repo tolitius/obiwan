@@ -91,28 +91,63 @@
 ;; check whether creating a function every time in (op redis #(this)) affects performance / GC collections
 ;; only _iff_ it is of any significance precreate these
 ;;      no matter the solution the public redis functions should remain _composable_
+;;      but.. pipelining commands should solve most if not all
+
+;; the private redis command functions that are decoupled from redis connection enable pipeling
+;; i.e. to build command functions at runtime and then be passed into a pipeline
+;; TODO: enable pipelining for all fns (sets, sorted sets, etc..)
 
 ;; hash
 
+(defn- -hget- [h f]
+  #(.hget % h f))
+
+(defn- -hset- [h m]
+  #(.hset % h m))
+
+(defn- -hmget- [h fs]
+  #(.hmget % h (into-array String fs)))
+
+(defn- -hmset- [h m]
+  #(.hmset % h m))
+
+(defn- -hgetall- [h]
+  #(.hgetAll % h))
+
+(defn- -hdel- [h vs]
+  #(.hdel % h (into-array String vs)))
+
 (defn ^{:doc {:obiwan-doc
               "takes in a jedis connection pool, a hash name and a field name if present, returns a field name value"}}
-      hget [^JedisPool redis h f]
-  (op redis #(.hget % h f)))
+  hget
+  ([h f] (-hget- h f))
+  ([^JedisPool redis h f]
+   (op redis (-hget- h f))))
 
-(defn hmget [^JedisPool redis h fs]
-  (into [] (op redis #(.hmget % h (into-array String fs)))))
+(defn hset
+  ([h m] (-hset- h m))
+  ([redis h m]
+   (op redis (-hset- h m))))
 
-(defn hgetall [^JedisPool redis h]
-  (into {} (op redis #(.hgetAll % h))))
+(defn hmget
+  ([h fs] (-hmget- h fs))
+  ([^JedisPool redis h fs]
+   (into [] (op redis (-hmget- h fs)))))
 
-(defn hset [redis h f v]
-  (op redis #(.hset % h f v)))
+(defn hmset
+  ([h m] (-hmset- h m))
+  ([redis h m]
+   (op redis (-hmset- h m))))
 
-(defn hmset [redis h m]
-  (op redis #(.hmset % h m)))
+(defn hgetall
+  ([h] (-hgetall- h))
+  ([^JedisPool redis h]
+   (into {} (op redis (-hgetall- h)))))
 
-(defn hdel [redis h & v]
-  (op redis #(.hdel % h (into-array String v))))
+(defn hdel
+  ([h vs] (-hdel- h vs))
+  ([redis h vs]
+   (op redis (-hdel- h vs))))
 
 ;; sorted set
 
@@ -133,33 +168,33 @@
 (defn sismember [redis s v]
   (op redis #(.sismember % s v)))
 
-(defn sadd [redis s v]
+(defn sadd [redis s vs]
   (op redis #(.sadd % s (into-array
-                          String [v]))))
+                          String vs))))
 
-(defn srem [redis s v]
+(defn srem [redis s vs]
   (op redis #(.srem % s (into-array
-                         String [v]))))
+                         String vs))))
 
 ;; basic operations
 
 (defn set [redis k v]
   (op redis #(.set % k v)))
 
-(defn mset [redis & kv]
+(defn mset [redis kv]
   (op redis #(.mset % (into-array kv))))
 
 (defn get [redis k]
   (op redis #(.get % k)))
 
-(defn mget [redis & k]
-  (op redis #(.mget % (into-array k))))
+(defn mget [redis ks]
+  (op redis #(.mget % (into-array ks))))
 
-(defn del [redis & k]
-  (op redis #(.del % (into-array k))))
+(defn del [redis ks]
+  (op redis #(.del % (into-array ks))))
 
-(defn exists [redis & v]
-  (op redis #(.exists % (into-array v))))
+(defn exists [redis vs]
+  (op redis #(.exists % (into-array vs))))
 
 (defn type [redis k]
   (op redis #(.type % k)))
@@ -178,6 +213,26 @@
 
 (defn decr-by [redis k v]
   (op redis #(.decrBy % k v)))
+
+;; pipeline
+
+(defn make-pipeline [conn]
+  (.pipelined conn))
+
+(defn sync-pipeline [pipe]
+  (.sync pipe))
+
+(defn realize-responses [rs]
+  (mapv #(.get %) rs))
+
+(defn pipeline [redis commands]
+  (op redis
+      (fn [conn]
+        (let [pipe (make-pipeline conn)
+              rs (mapv #(% pipe)
+                       commands)]
+          (sync-pipeline pipe)
+          (realize-responses rs)))))
 
 ;; scaning things
 

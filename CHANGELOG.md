@@ -1,3 +1,17 @@
+# 0.1.46
+
+add pipelining:
+
+```clojure
+(redis/pipeline conn [(redis/hset ...)
+                      (redis/hmget...)
+                      (redis/hset ...)
+                      ...])
+```
+
+so far only to hashes
+TODO: add to all
+
 # 0.1.45
 
 added more basic commands:
