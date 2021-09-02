@@ -68,16 +68,17 @@
                      {:keys [limit
                              ;; TODO: add other search options
                              ]}]
-  (let [params (cond-> {}
+  (let [separator "-@@@-"    ;; TODO: needs a cleaner idea that would still keep not interfering with qeury strings
+        params (cond-> {}
                  (seq limit) (assoc :limit (make-limit limit))
                  ;; TODO: add other definitions opts
                  )
-        opts (->> [iname
-                   query
-                   (-> params vals cmd/redisify-params)]
-                  t/xs->str
-                  t/tokenize
-                  (into-array String))
+        opts (-> [iname
+                  query
+                  (-> params vals cmd/redisify-params)]
+                  (t/xs->str separator)
+                  (t/tokenize separator)
+                  (->> (into-array String)))
         send-search #(-> (t/send-command cmd/FT_SEARCH opts %)
                          t/binary-multi-bulk-reply)]
     (-> (oc/op redis send-search)
