@@ -1,5 +1,6 @@
 (ns obiwan.commands
-  (:refer-clojure :exclude [get set type keys]))
+  (:refer-clojure :exclude [get set type keys])
+  (:require [obiwan.tools :as t]))
 
 ;; wrap Java methods to make them composable
 
@@ -65,11 +66,11 @@
 (defn set [k v]
   #(.set % k v))
 
-(defn mset [kv]
-  #(.mset % (into-array kv)))
-
 (defn get [k]
   #(.get % k))
+
+(defn mset [m]
+  #(.mset % (t/m->array m)))
 
 (defn mget [ks]
   #(.mget % (into-array ks)))

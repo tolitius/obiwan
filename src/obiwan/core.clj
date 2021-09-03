@@ -166,41 +166,65 @@
 
 ;; basic operations
 
-(defn set [redis k v]
-  (op redis #(.set % k v)))
+(defn set
+  ([k v] (c/set k v))
+  ([redis k v]
+   (op redis (c/set k v))))
 
-(defn mset [redis kv]
-  (op redis #(.mset % (into-array kv))))
+(defn get
+  ([k] (c/get k))
+  ([redis k]
+   (op redis (c/get k))))
 
-(defn get [redis k]
-  (op redis #(.get % k)))
+(defn mset
+  ([m] (c/mset m))
+  ([redis m]
+   (op redis (c/mset m))))
 
-(defn mget [redis ks]
-  (op redis #(.mget % (into-array ks))))
+(defn mget
+  ([ks] (c/mget ks))
+  ([redis ks]
+   (op redis (c/mget ks))))
 
-(defn del [redis ks]
-  (op redis #(.del % (into-array ks))))
+(defn del
+  ([ks] (c/del ks))
+  ([redis ks]
+   (op redis (c/del ks))))
 
-(defn exists [redis vs]
-  (op redis #(.exists % (into-array vs))))
+(defn exists
+  ([vs] (c/exists vs))
+  ([redis vs]
+   (op redis (c/exists vs))))
 
-(defn type [redis k]
-  (op redis #(.type % k)))
+(defn type
+  ([k] (c/type k))
+  ([redis k]
+   (op redis (c/type k))))
 
-(defn keys [redis k]
-  (op redis #(.keys % k)))
+(defn keys
+  ([k] (c/keys k))
+  ([redis k]
+   (op redis (c/keys k))))
 
-(defn incr [redis k]
-  (op redis #(.incr % k)))
+(defn incr
+  ([k] (c/incr k))
+  ([redis k]
+   (op redis (c/incr k))))
 
-(defn incr-by [redis k v]
-  (op redis #(.incrBy % k v)))
+(defn incr-by
+  ([k v] (c/incr-by k v))
+  ([redis k v]
+   (op redis (c/incr-by k v))))
 
-(defn decr [redis k]
-  (op redis #(.decr % k)))
+(defn decr
+  ([k] (decr k))
+  ([redis k]
+   (op redis (c/decr k))))
 
-(defn decr-by [redis k v]
-  (op redis #(.decrBy % k v)))
+(defn decr-by
+  ([k v] (c/decr-by k v))
+  ([redis k v]
+   (op redis (c/decr-by k v))))
 
 ;; pipeline
 

@@ -179,6 +179,8 @@ looking inside the source (redis server):
 127.0.0.1:6379>
 ```
 
+take a look at [tests](test/obiwan/test.clj) to see how other commands data structures are used
+
 ## run commands in a pipeline
 
 redis supports [pipelining](https://redis.io/topics/pipelining) to speed up client queries.
