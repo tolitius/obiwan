@@ -1,7 +1,7 @@
 # 0.1.473
 
 * convert all supported core commands to support pipelining
-* hset takes a map vs. a seq of kv pairs
+* `mset` takes a map vs. a seq of kv pairs
 * fix the `(is foo bar)` => `(is (= foo bar))` tests
 
 # 0.1.46
