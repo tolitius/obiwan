@@ -24,6 +24,42 @@
 ;;              [LIMIT {offset} {num}] ...
 ;;              [FILTER {expr}] ...
 
+(deftype Reduce [fun args as]
+  cmd/Parameter
+  (validate [param]
+    (if (and (seq fun)
+             (seq args))
+      {:valid? true}
+      {:valid? false
+       :spec "need function and arguments"
+       :what-i-see {:function fun :arguments args}}))
+  (redisify [param]
+    (->> (cond-> ["REDUCE" fun (count args)]
+           (seq args) (conj args)
+           (seq as)   (conj ["AS" as]))
+         flatten
+         (map str))))
+
+(defn make-reducer [{:keys [fn fields as]}]
+  (Reduce. fn fields as))
+
+(deftype GroupBy [fields reducers]
+  cmd/Parameter
+  (validate [param]
+    (if (and (seq fields)
+             (or (empty? reducers)
+                 (every? cmd/validate reducers)))
+        {:valid? true}
+        {:valid? false
+         :spec "groupby should have fields and valid reducers"
+         :what-i-see {:fields fields :reducers reducers}}))
+  (redisify [param]
+    (-> ["GROUPBY" (str (count fields)) (map str fields) (map cmd/redisify reducers)]
+        flatten)))
+
+(defn make-group-by [{:keys [by reduce]}]
+  (GroupBy. by (mapv make-reducer reduce)))
+
 (deftype Limit [offset number]
   cmd/Parameter
   (validate [param]
@@ -34,36 +70,39 @@
          :spec "offset and number should be integers"
          :what-i-see {:offset offset :number number}}))
   (redisify [param]
-    (str "LIMIT " offset " " number)))
+    ["LIMIT" (str offset) (str number)]))
 
 (defn make-limit [{:keys [offset number]}]
   (Limit. offset number))
 
 (defn response->human [xs]
   {:found (first xs)
-   :results (mapv
-              (fn [[k v]]
-                {k
-                 (t/bytes->map v)})
-              (partition 2 (rest xs)))})
+   :results (mapv t/bytes->map (rest xs))})
+
+(defn debug [x]
+  (clojure.pprint/pprint x)
+  x)
 
 (defn aggregate-index [^JedisPool redis
                        iname
                        query
-                       {:keys [limit
+                       {:keys [group
+                               limit
                                ;; TODO: add other search options
                                ]}]
   (let [separator "-@@@-"    ;; TODO: needs a cleaner idea that would still keep not interfering with qeury strings
         params (cond-> {}
-                 (seq limit) (assoc :limit (make-limit limit))
+                 (seq group)  (assoc :group-by (make-group-by group))
+                 (seq limit)  (assoc :limit (make-limit limit))
                  ;; TODO: add other definitions opts
                  )
-        opts (-> [iname
-                  query
-                  (-> params vals cmd/redisify-params)]
-                  (t/xs->str separator)
-                  (t/tokenize separator)
-                  (->> (into-array String)))
+        opts (->> params
+                  vals
+                  (mapcat cmd/redisify)
+                  (cons query)
+                  (cons iname)
+                  debug
+                  (into-array String))
         send-search #(-> (t/send-command cmd/FT_AGGREGATE opts %)
                          t/binary-multi-bulk-reply)]
     (-> (oc/op redis send-search)

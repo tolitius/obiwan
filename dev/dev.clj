@@ -5,6 +5,7 @@
             [clojure.java.io :as io]
             [clojure.repl :refer :all]
             [clojure.pprint :refer [pprint]]
+            [yang.lang :as y]
             [spec :as rspec]
             [obiwan.core :as redis]
             [obiwan.tools :as t]
@@ -54,6 +55,16 @@
 
   (search/ft-search conn "solar-system"
                          "@nick:re*")
+
+  ;; TODO: still need a seq of "group-by"s
+  (search/ft-aggregate conn "solar-system"
+                            "blue | red"
+                            {:group {:by ["@nick"]
+                                     :reduce [{:fn "MAX"
+                                               :fields ["@nick"]
+                                               :as "foo"}]}
+                             :limit {:offset 0
+                                     :number 4}})
 
   ;; suggestions
   (search/ft-sugadd conn "songs" "Don't Stop Me Now" 1 {:payload "Queen"})
