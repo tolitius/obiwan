@@ -4,6 +4,7 @@
 
 (defonce FT_CREATE (t/make-protocol-command "FT.CREATE"))
 (defonce FT_SEARCH (t/make-protocol-command "FT.SEARCH"))
+(defonce FT_AGGREGATE (t/make-protocol-command "FT.AGGREGATE"))
 (defonce FT__LIST (t/make-protocol-command "FT._LIST"))
 (defonce FT_DROPINDEX (t/make-protocol-command "FT.DROPINDEX"))
 (defonce FT_SUGADD (t/make-protocol-command "FT.SUGADD"))

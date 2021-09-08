@@ -1,40 +1,28 @@
-(ns obiwan.search.command.search
+(ns obiwan.search.command.aggregate
   (:require [obiwan.core :as oc]
             [obiwan.search.command.core :as cmd]
             [obiwan.tools :as t])
   (:import [redis.clients.jedis JedisPool]))
 
+
+;; (!) this command is work in progress
+
+
 ;; ------------------------
-;; FT.SEARCH
+;; FT.AGGREGATE
 ;; ------------------------
 
-;; FT.SEARCH {index} {query}
-;;           [NOCONTENT]
-;;           [VERBATIM]
-;;           [NOSTOPWORDS]
-;;           [WITHSCORES]
-;;           [WITHPAYLOADS]
-;;           [WITHSORTKEYS]
-;;           [FILTER {numeric_field} {min} {max}] ...
-;;           [GEOFILTER {geo_field} {lon} {lat} {radius} m|km|mi|ft]
-;;           [INKEYS {num} {key} ... ]
-;;           [INFIELDS {num} {field} ... ]
-;;           [RETURN {num} {field} ... ]
-;;           [SUMMARIZE [FIELDS {num} {field} ... ]
-;;                      [FRAGS {num}]
-;;                      [LEN {fragsize}]
-;;                      [SEPARATOR {separator}]]
-;;           [HIGHLIGHT [FIELDS {num} {field} ... ]
-;;                      [TAGS {open} {close}]]
-;;           [SLOP {slop}]
-;;           [INORDER]
-;;           [LANGUAGE {language}]
-;;           [EXPANDER {expander}]
-;;           [SCORER {scorer}]
-;;           [EXPLAINSCORE]
-;;           [PAYLOAD {payload}]
-;;           [SORTBY {field} [ASC|DESC]]
-;;           [LIMIT offset num]
+;; FT.AGGREGATE {index_name} {query_string}
+;;              [VERBATIM]
+;;              [LOAD {nargs} {property} ...]
+;;              [GROUPBY {nargs} {property} ...
+;;                REDUCE {func} {nargs} {arg} ... [AS {name:string}]
+;;                ...
+;;              ] ...
+;;              [SORTBY {nargs} {property} [ASC|DESC] ... [MAX {num}]]
+;;              [APPLY {expr} AS {alias}] ...
+;;              [LIMIT {offset} {num}] ...
+;;              [FILTER {expr}] ...
 
 (deftype Limit [offset number]
   cmd/Parameter
@@ -55,16 +43,16 @@
   {:found (first xs)
    :results (mapv
               (fn [[k v]]
-                {(String. k)
+                {k
                  (t/bytes->map v)})
               (partition 2 (rest xs)))})
 
-(defn search-index [^JedisPool redis
-                     iname
-                     query
-                     {:keys [limit
-                             ;; TODO: add other search options
-                             ]}]
+(defn aggregate-index [^JedisPool redis
+                       iname
+                       query
+                       {:keys [limit
+                               ;; TODO: add other search options
+                               ]}]
   (let [separator "-@@@-"    ;; TODO: needs a cleaner idea that would still keep not interfering with qeury strings
         params (cond-> {}
                  (seq limit) (assoc :limit (make-limit limit))
@@ -76,7 +64,7 @@
                   (t/xs->str separator)
                   (t/tokenize separator)
                   (->> (into-array String)))
-        send-search #(-> (t/send-command cmd/FT_SEARCH opts %)
+        send-search #(-> (t/send-command cmd/FT_AGGREGATE opts %)
                          t/binary-multi-bulk-reply)]
     (-> (oc/op redis send-search)
         response->human)))
