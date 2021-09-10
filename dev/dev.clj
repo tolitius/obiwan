@@ -66,6 +66,19 @@
                              :limit {:offset 0
                                      :number 4}})
 
+  ;; should probabl be:
+  (search/ft-aggregate conn "solar-system"
+                            "blue | red"
+                            {:group [{:by ["@nick"]
+                                      :reduce [{:fn "MAX"
+                                                :fields ["@planet" "@nick @mass"]
+                                                :as "nick-max"}]}
+                                     {:by ["@mass"]
+                                      :reduce [{:fn "MAX"
+                                                :fields ["@planet" "@nick" "@mass"]
+                                                :as "mass-max"}]}]
+                             :limit {:offset 0
+                                     :number 4}})
   ;; suggestions
   (search/ft-sugadd conn "songs" "Don't Stop Me Now" 1 {:payload "Queen"})
   (search/ft-sugadd conn "songs" "Rock You Like A Hurricane" 1 {:payload "Scorpions"})
