@@ -19,7 +19,7 @@ tree:
 	clojure -Xdeps tree
 
 test:
-	clojure -X:test :patterns '[".*test"]'
+	clojure -X:test :patterns '[".*test" ".*test.search"]'
 
 ## does not work with "-M"s ¯\_(ツ)_/¯
 repl:

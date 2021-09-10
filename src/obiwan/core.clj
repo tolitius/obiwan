@@ -226,6 +226,20 @@
   ([redis k v]
    (op redis (c/decr-by k v))))
 
+;; ops
+
+(defn module-load
+  ([path]
+   (c/module-load path))
+  ([redis path]
+   (op redis (c/module-load path))))
+
+(defn module-unload
+  ([mname]
+   (c/module-unload mname))
+  ([redis mname]
+   (op redis (c/module-unload mname))))
+
 ;; pipeline
 
 (defn make-pipeline [conn]

@@ -98,3 +98,11 @@
 
 (defn decr-by [k v]
   #(.decrBy % k v))
+
+;; ops
+
+(defn module-load [path]
+  #(.moduleLoad % path))
+
+(defn module-unload [mname]
+  #(.moduleLoad % mname))

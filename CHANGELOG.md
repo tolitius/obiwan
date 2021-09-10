@@ -1,3 +1,8 @@
+# 0.1.475
+
+* add module load/unload commands
+* add search test harness and search / suggest tests
+
 # 0.1.473
 
 * convert all supported core commands to support pipelining

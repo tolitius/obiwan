@@ -1,4 +1,6 @@
 {:redis
- {:server {:path "/usr/local/bin/redis-server"
+          ;;TODO: make overridable by ENV variables
+ {:server {:path "/usr/local/bin/redis-server"                    ;; override these two with paths that match
+           :modules {:search "/opt/redis/modules/redisearch.so"}  ;; your redis install + modules location
            :port 4242
            :os "MAC_OS_X"}}} ;; should match https://github.com/ozimov/embedded-redis/blob/master/src/main/java/redis/embedded/util/OS.java
