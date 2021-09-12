@@ -66,7 +66,7 @@
                              :limit {:offset 0
                                      :number 4}})
 
-  ;; should probabl be:
+  ;; should probably be (or both ^^^ and \/\/\/):
   (search/ft-aggregate conn "solar-system"
                             "blue | red"
                             {:group [{:by ["@nick"]

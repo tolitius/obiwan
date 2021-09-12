@@ -57,8 +57,22 @@
     (-> ["GROUPBY" (str (count fields)) (map str fields) (map cmd/redisify reducers)]
         flatten)))
 
+(deftype GroupBys [group-bys]
+  cmd/Parameter
+  (validate [param]
+    (mapv cmd/validate group-bys))
+  (redisify [param]
+    (mapcat cmd/redisify group-bys)))
+
 (defn make-group-by [{:keys [by reduce]}]
   (GroupBy. by (mapv make-reducer reduce)))
+
+(defn make-group-bys [groups]
+  (cond
+    (map? groups)        (make-group-by groups)
+    (sequential? groups) (GroupBys. (mapv make-group-by groups))
+    :else (throw         (RuntimeException. (str "\"group by\" can be either a map for single \"group by\""
+                                                 " or a list/vector for many \"group by\"s")))))
 
 (deftype Limit [offset number]
   cmd/Parameter
@@ -92,7 +106,7 @@
                                ]}]
   (let [separator "-@@@-"    ;; TODO: needs a cleaner idea that would still keep not interfering with qeury strings
         params (cond-> {}
-                 (seq group)  (assoc :group-by (make-group-by group))
+                 (seq group)  (assoc :group-by (make-group-bys group))
                  (seq limit)  (assoc :limit (make-limit limit))
                  ;; TODO: add other definitions opts
                  )
