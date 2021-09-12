@@ -74,6 +74,21 @@
     :else (throw         (RuntimeException. (str "\"group by\" can be either a map for single \"group by\""
                                                  " or a list/vector for many \"group by\"s")))))
 
+(deftype Apply [expr as]
+  cmd/Parameter
+  (validate [param]
+    (if (and (seq expr)
+             (seq as))
+        {:valid? true}
+        {:valid? false
+         :spec "\"expr\" and \"as\" can't be empty"
+         :what-i-see {:expr expr :as as}}))
+  (redisify [param]
+    ["APPLY" expr "AS" as]))
+
+(defn make-apply [{:keys [expr as]}]
+  (Apply. expr as))
+
 (deftype Limit [offset number]
   cmd/Parameter
   (validate [param]
@@ -97,15 +112,20 @@
   (clojure.pprint/pprint x)
   x)
 
+;; TODO: because APPLY and GROUPBY and others come in many
+;;       plus can be positioned anywhere in a query addiing a different meaning that depends on a position
+;;       the actual query has to be a vector of maps vs. a map
 (defn aggregate-index [^JedisPool redis
                        iname
                        query
                        {:keys [group
+                               apply
                                limit
                                ;; TODO: add other search options
                                ]}]
   (let [separator "-@@@-"    ;; TODO: needs a cleaner idea that would still keep not interfering with qeury strings
         params (cond-> {}
+                 (seq apply)  (assoc :apply (make-apply apply))
                  (seq group)  (assoc :group-by (make-group-bys group))
                  (seq limit)  (assoc :limit (make-limit limit))
                  ;; TODO: add other definitions opts

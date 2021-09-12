@@ -56,6 +56,66 @@
   (search/ft-search conn "solar-system"
                          "@nick:re*")
 
+
+  ;; aggregate shtuff
+
+  (search/ft-create conn "website-visits"
+                    {:prefix ["stats:visit:"]
+                     :schema [#:text{:name "url" :sortable? true}
+                              #:numeric{:name "timestamp" :sortable? true}
+                              #:tag{:name "coutry" :sortable? true}
+                              #:text{:name "user_id" :sortable? true :no-index? true}]})
+
+  (def visits
+    [{"url"       "/2008/11/19/zx-spectrum-child/"
+      "timestamp" (str (System/nanoTime))
+      "country"   "Ukraine"
+      "user_id"   "tolitius"}
+
+     {"url"       "/2017/01/10/hubble-space-mission-securely-configured/"
+      "timestamp" (str (System/nanoTime))
+      "country"   "China"
+      "user_id"   "hashcn"}
+
+     {"url"       "/2013/10/29/scala-where-ingenuity-lies/"
+      "timestamp" (str (System/nanoTime))
+      "country"   "USA"
+      "user_id"   "unclejohn"}
+
+     {"url"       "/2013/10/22/limited-async/"
+      "timestamp" (str (System/nanoTime))
+      "country"   "USA"
+      "user_id"   "tolitius"}
+
+     {"url"       "/2013/05/31/datomic-can-simple-be-also-fast/"
+      "timestamp" (str (System/nanoTime))
+      "country"   "Ukraine"
+      "user_id"   "vvz"}
+
+     {"url"       "/2012/05/08/scala-fun-with-canbuildfrom/"
+      "timestamp" (str (System/nanoTime))
+      "country"   "USA"
+      "user_id"   "tolitius"}
+
+     {"url"       "/2017/04/09/hazelcast-keep-your-cluster-close-but-cache-closer/"
+      "timestamp" (str (System/nanoTime))
+      "country"   "China"
+      "user_id"   "bruce"}])
+
+  (map-indexed (fn [idx visit]
+                       (redis/hset conn
+                                    (str "stats:visit:dotkam.com:" idx)
+                                    visit))
+               visits)
+
+  (search/ft-aggregate conn "website-visits" "*" {:apply {:expr "@timestamp - (@timestamp % 3600000)"
+                                                          :as "hour"}
+                                                  :group {:by ["@hour"]
+                                                          :reduce [{:fn "COUNT_DISTINCT"
+                                                                    :fields ["@user_id"]
+                                                                    :as "num_users"}]}
+                                                  :limit {:offset 0 :number 8}})
+
   ;; TODO: still need a seq of "group-by"s
   (search/ft-aggregate conn "solar-system"
                             "blue | red"
