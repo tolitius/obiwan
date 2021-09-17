@@ -116,6 +116,21 @@
                                                                     :as "num_users"}]}
                                                   :limit {:offset 0 :number 8}})
 
+  ;; this is the way..
+  (search/ft-aggregate conn "website-visits" "*" [[:apply {:expr "@timestamp - (@timestamp % 3600000)"
+                                                           :as "hour"}]
+                                                  [:group-by ["@hour"]
+                                                   :reduce [{:fn "COUNT_DISTINCT"
+                                                             :fields ["@user_id"]
+                                                             :as "num_users"}]]
+                                                  [:limit {:offset 0 :number 8}]])
+
+  ;; raw?
+  (search/ft-aggregate conn "website-visits" "*" {:raw "APPLY \"@timestamp - (@timestamp % 3600)\" AS hour
+                                                        GROUPBY 1 @hour
+                                                          REDUCE COUNT_DISTINCT 1 @user_id AS num_users
+                                                        LIMIT 0 8"})
+
   ;; TODO: still need a seq of "group-by"s
   (search/ft-aggregate conn "solar-system"
                             "blue | red"
