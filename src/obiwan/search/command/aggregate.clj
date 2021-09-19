@@ -1,5 +1,6 @@
 (ns obiwan.search.command.aggregate
-  (:require [obiwan.core :as oc]
+  (:require [clojure.string :as s]
+            [obiwan.core :as oc]
             [obiwan.search.command.core :as cmd]
             [obiwan.tools :as t])
   (:import [redis.clients.jedis JedisPool]))
@@ -57,22 +58,8 @@
     (-> ["GROUPBY" (str (count fields)) (map str fields) (map cmd/redisify reducers)]
         flatten)))
 
-(deftype GroupBys [group-bys]
-  cmd/Parameter
-  (validate [param]
-    (mapv cmd/validate group-bys))
-  (redisify [param]
-    (mapcat cmd/redisify group-bys)))
-
 (defn make-group-by [{:keys [by reduce]}]
   (GroupBy. by (mapv make-reducer reduce)))
-
-(defn make-group-bys [groups]
-  (cond
-    (map? groups)        (make-group-by groups)
-    (sequential? groups) (GroupBys. (mapv make-group-by groups))
-    :else (throw         (RuntimeException. (str "\"group by\" can be either a map for single \"group by\""
-                                                 " or a list/vector for many \"group by\"s")))))
 
 (deftype Apply [expr as]
   cmd/Parameter
@@ -104,9 +91,46 @@
 (defn make-limit [{:keys [offset number]}]
   (Limit. offset number))
 
+(deftype Sort [props smax]
+  cmd/Parameter
+  (validate [param]
+    (if (and (map? props)
+             (or (not smax)
+                 (number? smax)))
+      {:valid? true}
+      {:valid? false
+       :spec "sort needs a {prop order} map and an optional number \"max\" param"
+       :what-i-see {:props props :max smax}}))
+  (redisify [param]
+    (let [pvec (-> (for [[k v] props]
+                     [k
+                      (-> v name s/upper-case)])
+                   flatten)]
+      (->> (cond-> ["SORTBY" (count pvec) pvec]
+             smax (conj ["MAX" smax]))
+           flatten
+           (map str)))))
+
+(defn make-sort [{:keys [by max]}]
+  (Sort. by max))
+
 (defn response->human [xs]
   {:found (first xs)
    :results (mapv t/bytes->map (rest xs))})
+
+(defn opt->command [opt]
+  (if-not (map? opt)
+    (throw (RuntimeException. (str "invalid aggregate option. aggregate options should be a vector of maps with keys"
+                                   " matching FT.AGGREGATE spec. for example: "
+                                   "[{:group-by [\"@prop\"] :reduce [{...}]} {:limit {:number 0 :offset 42}}]")))
+    (let [[oname args] (first opt)]
+      (case oname
+        :group (make-group-by args)
+        :sort  (make-sort args)
+        :apply (make-apply args)
+        :limit (make-limit args)
+        (throw (RuntimeException. (str "'" oname
+                                       "' aggregate option is not (yet?) implemented for " opt)))))))
 
 (defn debug [x]
   (clojure.pprint/pprint x)
@@ -118,20 +142,10 @@
 (defn aggregate-index [^JedisPool redis
                        iname
                        query
-                       {:keys [group
-                               apply
-                               limit
-                               ;; TODO: add other search options
-                               ]}]
+                       opts]
   (let [separator "-@@@-"    ;; TODO: needs a cleaner idea that would still keep not interfering with qeury strings
-        params (cond-> {}
-                 (seq apply)  (assoc :apply (make-apply apply))
-                 (seq group)  (assoc :group-by (make-group-bys group))
-                 (seq limit)  (assoc :limit (make-limit limit))
-                 ;; TODO: add other definitions opts
-                 )
+        params (mapv opt->command opts)
         opts (->> params
-                  vals
                   (mapcat cmd/redisify)
                   (cons query)
                   (cons iname)
