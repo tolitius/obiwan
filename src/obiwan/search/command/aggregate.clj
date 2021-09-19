@@ -149,7 +149,7 @@
                   (mapcat cmd/redisify)
                   (cons query)
                   (cons iname)
-                  debug
+                  ; debug
                   (into-array String))
         send-search #(-> (t/send-command cmd/FT_AGGREGATE opts %)
                          t/binary-multi-bulk-reply)]

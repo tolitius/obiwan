@@ -110,11 +110,11 @@
 
 
   (search/ft-aggregate conn "website-visits" "*" [{:apply {:expr "upper(@country)"
-                                                                   :as "country"}}
-                                                          {:group {:by ["@country"]
-                                                                   :reduce [{:fn "COUNT_DISTINCT"
-                                                                             :fields ["@user_id"]
-                                                                             :as "num_users"}]}}])
+                                                           :as "country"}}
+                                                  {:group {:by ["@country"]
+                                                           :reduce [{:fn "COUNT_DISTINCT"
+                                                                     :fields ["@user_id"]
+                                                                     :as "num_users"}]}}])
   ;; {:found 3,
   ;;  :results
   ;;  [{"country" "USA", "num_users" "2"}
@@ -177,5 +177,3 @@
   (search/ft-sugadd conn "songs""Purple Haze" 1 {:payload "Jimmy"})
 
   (pprint (search/ft-sugget conn "songs" "mm" {:fuzzy? true :max 42}))
-
-  )
