@@ -138,13 +138,13 @@
   (is (= {:found 3,
           :results [{"num_users" "3",
                      "hour" "1631962800",
-                     "datatime" "2021-09-18T11:00:00Z"}     ;; 11:00
+                     "datetime" "2021-09-18T11:00:00Z"}     ;; 11:00
                     {"num_users" "1",
                      "hour" "1631959200",
-                     "datatime" "2021-09-18T10:00:00Z"}     ;; 10:00
+                     "datetime" "2021-09-18T10:00:00Z"}     ;; 10:00
                     {"num_users" "2",
                      "hour" "1631966400",
-                     "datatime" "2021-09-18T12:00:00Z"}]}   ;; 12:00
+                     "datetime" "2021-09-18T12:00:00Z"}]}   ;; 12:00
          (search/ft-aggregate tt/conn "website-visits" "*" [{:apply {:expr "@timestamp - (@timestamp % 3600)"
                                                                      :as "hour"}}
                                                             {:group {:by ["@hour"]
@@ -152,20 +152,20 @@
                                                                                :fields ["@user_id"]
                                                                                :as "num_users"}]}}
                                                             {:apply {:expr "timefmt(@hour)"
-                                                                     :as "datatime"}}]))))
+                                                                     :as "datetime"}}]))))
 
 (deftest should-wrap-sort-the-group
   (make-website-visit-index tt/conn)
   (is (= {:found 3,
           :results [{"num_users" "2",
                      "hour" "1631966400",
-                     "datatime" "2021-09-18T12:00:00Z"}     ;; 12:00
+                     "datetime" "2021-09-18T12:00:00Z"}     ;; 12:00
                     {"num_users" "3",
                      "hour" "1631962800",
-                     "datatime" "2021-09-18T11:00:00Z"}     ;; 11:00
+                     "datetime" "2021-09-18T11:00:00Z"}     ;; 11:00
                     {"num_users" "1",
                      "hour" "1631959200",
-                     "datatime" "2021-09-18T10:00:00Z"}]}   ;; 10:00
+                     "datetime" "2021-09-18T10:00:00Z"}]}   ;; 10:00
          (search/ft-aggregate tt/conn "website-visits" "*" [{:apply {:expr "@timestamp - (@timestamp % 3600)"
                                                                      :as "hour"}}
                                                             {:group {:by ["@hour"]
@@ -174,4 +174,4 @@
                                                                                :as "num_users"}]}}
                                                             {:sort {:by {"@hour" :desc}}}
                                                             {:apply {:expr "timefmt(@hour)"
-                                                                     :as "datatime"}}]))))
+                                                                     :as "datetime"}}]))))
