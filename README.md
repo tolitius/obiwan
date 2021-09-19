@@ -16,13 +16,17 @@ redis/search clojure client based on [jedis](https://github.com/redis/jedis).
 - [redis search](#redis-search)
   - [create the index](#create-the-index)
   - [search the index](#search-the-index)
-  - [list indices](#list-indices)
-  - [drop the index](#drop-the-index)
+  - [aggregations](#aggregations)
+    - [apply, group by, reduce](#apply-group-by-reduce)
+    - [repeating options](#repeating-options)
+    - [sort by](#sort-by)
   - [work with suggestions](#work-with-suggestions)
     - [add suggestions](#add-suggestions)
     - [search suggestions](#search-suggestions)
     - [delete suggestions](#delete-suggestions)
     - [measure suggestions](#measure-suggestions)
+  - [list indices](#list-indices)
+  - [drop the index](#drop-the-index)
 - [new redis commands](#new-redis-commands)
 - [documentation](#documentation)
 - [development](#development)
@@ -30,7 +34,7 @@ redis/search clojure client based on [jedis](https://github.com/redis/jedis).
   - [run/add tests](#runadd-tests)
 - [license](#license)
 
-## connect to a cluster
+# connect to a cluster
 
 Obi Wan relies on [JedisPool](https://www.javadoc.io/doc/redis.clients/jedis/latest/redis/clients/jedis/JedisPool.html) to connect to a cluster
 which means once the pool is created you'd have a collection of connections to work with.
@@ -79,13 +83,13 @@ closing the pool:
 ;; :pool-closed
 ```
 
-## work with data structures
+# work with data structures
 
 the super power of redis is in its [data structures](https://redis.io/topics/data-types-intro).<br/>
 
 here are examples on how to work with some of them:
 
-### hash
+## hash
 
 ```clojure
 => (redis/hset conn "solar-system" {"mercury"  "0.33 x 10^24 kg"
@@ -116,7 +120,7 @@ here are examples on how to work with some of them:
 ;;  "venus" "4.867 x 10^24 kg"}
 ```
 
-### sorted set
+## sorted set
 
 ```clojure
 => (redis/zadd conn "planets" {"mercury" 1.0
@@ -137,7 +141,7 @@ here are examples on how to work with some of them:
 ;; #{"mercury" "venus" "earth" "mars" "jupiter" "saturn" "uranus" "neptune" "pluto"}
 ```
 
-### what's in redis
+## what's in redis
 
 looking inside the source (redis server):
 
@@ -181,7 +185,7 @@ looking inside the source (redis server):
 
 take a look at [tests](test/obiwan/test.clj) to see how other commands data structures are used
 
-## run commands in a pipeline
+# run commands in a pipeline
 
 redis supports [pipelining](https://redis.io/topics/pipelining) to speed up client queries.
 
@@ -207,7 +211,7 @@ which can now be run in a single pipeline on redis servers:
 ;;  {"a" "ey", "b" "bee", "c" "cee"}]
 ```
 
-## redis search
+# redis search
 
 redis comes with several great [modules](https://redis.io/modules).<br/>
 [redis search](https://github.com/RediSearch/RediSearch) adds querying, secondary indexing, full text, geo search, etc.. it's pretty great.
@@ -225,7 +229,9 @@ and embrace the force of redis search:
 => (def conn (redis/create-pool))
 ```
 
-### create the index
+> _check out [search tests](/test/obiwan/test/search.clj) to refer to all the search/aggregate/suggest/etc. examples below + more_
+
+## create the index
 
 in order to let redis know it needs to start building a search index based on certain key prefix(es)
 this search index needs to be created:
@@ -245,7 +251,7 @@ a couple things to note:
 
 here is the full spec of the redis search native [FT.CREATE](https://oss.redis.com/redisearch/Commands/#ftcreate) command.
 
-### search the index
+## search the index
 
 in order to search the index we'll first add a few documents with key prefixes matching the index prefixes:
 
@@ -304,32 +310,158 @@ and.. we'll use `ft-search` function to search:
 this is the full spec of the redis search native [FT.SEARCH](https://oss.redis.com/redisearch/Commands/#ftsearch) command.<br/>
 also check out a very helpful query syntax reference in the redis search [docs](https://oss.redis.com/redisearch/Query_Syntax/).
 
-### list indices
+## aggregations
 
-to list search indices:
+redis searh relies on [FT.AGGREGATE](https://oss.redis.com/redisearch/Commands/#ftaggregate) command to aggregate search query results directly on a redis server.
 
-```clojure
-=> (search/ft-list conn)
-;; #{"solar-system"}
-```
+as per FT.AGGREGATE command's [spec](https://oss.redis.com/redisearch/Commands/#format_3) several aggreation options (group by, sort by, apply, filter, limit) may repeat many times over in the same aggregate. moreover their position matters: "apply a function => group-by => apply a different function".
 
-### drop the index
+therefore Obi Wan relies on a vector of these options rather than just on a map.
 
-to drop an index:
+in order to see some examples, let's create a new search index with website visits:
 
 ```clojure
-=> (search/ft-drop-index conn "solar-system")
+=> (search/ft-create conn "website-visits"
+                     {:prefix ["stats:visit:"]
+                      :schema [#:text{:name "url" :sortable? true}
+                               #:numeric{:name "timestamp" :sortable? true}
+                               #:tag{:name "country" :sortable? true}
+                               #:text{:name "user_id" :sortable? true :no-index? true}]})
 ;; "OK"
 ```
 
-or to also delete indexed hashes:
+a couple things to note (same as when we looked at FT.SEARCH above):
+
+* for the index "schema" a namespaced key map is used and validated against existing field types redis search supports
+* the whole index definition and schema is a single map that can be kept in configuration or/and sent over the network
+
+and let's add some documents/visits to populate this index with data:
 
 ```clojure
-=> (search/ft-drop-index conn "solar-system" {:dd? true})
-;; "OK"
+=> (def visits
+     [{"url"       "/2008/11/19/zx-spectrum-child/"
+       "timestamp" "1631965013"
+       "country"   "Ukraine"
+       "user_id"   "tolitius"}
+
+      {"url"       "/2017/01/10/hubble-space-mission-securely-configured/"
+       "timestamp" "1631963013"
+       "country"   "China"
+       "user_id"   "hashcn"}
+
+      {"url"       "/2013/10/29/s1631982013728cala-where-ingenuity-lies/"
+       "timestamp" "1631964013"
+       "country"   "USA"
+       "user_id"   "unclejohn"}
+
+      {"url"       "/2013/10/22/l1631982013728imited-async/"
+       "timestamp" "1631965013"
+       "country"   "USA"
+       "user_id"   "tolitius"}
+
+      {"url"       "/2013/05/31/d1631982013728atomic-can-simple-be-also-fast/"
+       "timestamp" "1631967013"
+       "country"   "Ukraine"
+       "user_id"   "vvz"}
+
+      {"url"       "/2012/05/08/s1631982013728cala-fun-with-canbuildfrom/"
+       "timestamp" "1631968013"
+       "country"   "USA"
+       "user_id"   "tolitius"}
+
+      {"url"       "/2017/04/09/h1631982013728azelcast-keep-your-cluster-close-but-cache-closer/"
+       "timestamp" "1631961014"
+       "country"   "China"
+       "user_id"   "bruce"}])
+
+;; #'dev/visits
+
+=> (map-indexed (fn [idx visit]
+                        (redis/hset conn
+                                     (str "stats:visit:dotkam.com:" idx)
+                                     visit))
+                visits)
+
+;; (4 4 4 4 4 4 4)
 ```
 
-### work with suggestions
+no we are ready for them tasty aggregations:
+
+### apply, group by, reduce
+
+first let's group users by country, counting only distinct/unique users:
+
+```clojure
+=> (search/ft-aggregate conn "website-visits" "*" [{:apply {:expr "upper(@country)"
+                                                            :as "country"}}
+                                                   {:group {:by ["@country"]
+                                                            :reduce [{:fn "COUNT_DISTINCT"
+                                                                      :fields ["@user_id"]
+                                                                      :as "num_users"}]}}])
+;; {:found 3,
+;;  :results
+;;  [{"country" "USA", "num_users" "2"}
+;;   {"country" "CHINA", "num_users" "2"}
+;;   {"country" "UKRAINE", "num_users" "2"}]}
+```
+
+`apply` is used here before group by to apply a function to every country before groupping to avoid casing problems, but really to illustrate how to stack options together as an ordered vector of maps.
+
+### repeating options
+
+here we'll use 2 applies before and after the group by to group unique website visitors per "hour":
+
+```clojure
+=>  (search/ft-aggregate conn "website-visits" "*" [{:apply {:expr "@timestamp - (@timestamp % 3600)"
+                                                             :as "hour"}}
+                                                    {:group {:by ["@hour"]
+                                                             :reduce [{:fn "COUNT_DISTINCT"
+                                                                       :fields ["@user_id"]
+                                                                       :as "num_users"}]}}
+                                                    {:apply {:expr "timefmt(@hour)"
+                                                             :as "datatime"}}])
+;; {:found 3,
+;;  :results
+;;  [{"num_users" "3",
+;;    "hour" "1631962800",
+;;    "datatime" "2021-09-18T11:00:00Z"}     ;; 11:00
+;;   {"num_users" "1",
+;;    "hour" "1631959200",
+;;    "datatime" "2021-09-18T10:00:00Z"}     ;; 10:00
+;;   {"num_users" "2",
+;;    "hour" "1631966400",
+;;    "datatime" "2021-09-18T12:00:00Z"}]}   ;; 12:00
+```
+
+### sort by
+
+above example can be improved by sorting groups by time (the hour):
+
+```clojure
+=>  (search/ft-aggregate conn "website-visits" "*" [{:apply {:expr "@timestamp - (@timestamp % 3600)"
+                                                             :as "hour"}}
+                                                    {:group {:by ["@hour"]
+                                                             :reduce [{:fn "COUNT_DISTINCT"
+                                                                       :fields ["@user_id"]
+                                                                       :as "num_users"}]}}
+                                                    {:sort {:by {"@hour" :desc}}}
+                                                    {:apply {:expr "timefmt(@hour)"
+                                                             :as "datatime"}}])
+
+;; {:found 3,
+;;  :results
+;;  [{"num_users" "2",
+;;    "hour" "1631966400",
+;;    "datatime" "2021-09-18T12:00:00Z"}     ;; 12:00
+;;   {"num_users" "3",
+;;    "hour" "1631962800",
+;;    "datatime" "2021-09-18T11:00:00Z"}     ;; 11:00
+;;   {"num_users" "1",
+;;    "hour" "1631959200",
+;;    "datatime" "2021-09-18T10:00:00Z"}]}   ;; 10:00
+```
+
+## work with suggestions
 
 redis search has 4 commands to work with suggestions (a.k.a. autocomplete):
 
@@ -340,7 +472,7 @@ redis search has 4 commands to work with suggestions (a.k.a. autocomplete):
 
 one difference from a search index is that these suggestions are left to the user to maintain: i.e. add and remove
 
-#### add suggestions
+### add suggestions
 
 let's add a few suggestions and then try to search (or "get") them:
 
@@ -369,7 +501,7 @@ and will take optional args:
 * `incr?`         : if true, we increment the existing entry of the suggestion by the given score, instead of replacing the score. This is useful for updating the dictionary based on user queries in real time
 * `payload value` : If set, we save an extra payload with the suggestion, that can be fetched by adding the WITHPAYLOADS argument to FT.SUGGET
 
-#### search suggestions
+### search suggestions
 
 now let's search through the suggestions:
 
@@ -400,7 +532,7 @@ let's try them all together:
 ;;   :payload "Nirvana"}]
 ```
 
-#### delete suggestions
+### delete suggestions
 
 suggestions can be deleted with `ft-sugdel`:
 
@@ -409,7 +541,7 @@ suggestions can be deleted with `ft-sugdel`:
 ;; 1
 ```
 
-#### measure suggestions
+### measure suggestions
 
 suggestions can be "measured" (how many suggestions live behind the key):
 
@@ -418,7 +550,32 @@ suggestions can be "measured" (how many suggestions live behind the key):
 ;; 9
 ```
 
-## new redis commands
+## list indices
+
+to list search indices:
+
+```clojure
+=> (search/ft-list conn)
+;; #{"solar-system"}
+```
+
+## drop the index
+
+to drop an index:
+
+```clojure
+=> (search/ft-drop-index conn "solar-system")
+;; "OK"
+```
+
+or to also delete indexed hashes:
+
+```clojure
+=> (search/ft-drop-index conn "solar-system" {:dd? true})
+;; "OK"
+```
+
+# new redis commands
 
 being a Jedi, Obi Wan knows the way of the force<br/>
 even when "Jedis" is [not yet upto date](https://github.com/redis/jedis/issues/2581) Obi Wan can run new Redis commands:
@@ -436,7 +593,7 @@ even when "Jedis" is [not yet upto date](https://github.com/redis/jedis/issues/2
 ;;  "proto" 2}
 ```
 
-## documentation
+# documentation
 
 redis command documentation can be added via `dev/add-redis-docs` function:
 
@@ -466,7 +623,7 @@ redis command documentation can be added via `dev/add-redis-docs` function:
 ;;                :summary Get the value of a hash field}}
 ```
 
-## development
+# development
 
 while Obi Wan does not require any particular version of clojure to run<br/>
 since its build is done via [tools.build](https://clojure.org/guides/tools_build)<br/>
@@ -478,7 +635,7 @@ to fire up a development REPL:
 make repl
 ```
 
-### send any redis commands
+## send any redis commands
 
 this is usefult to experiment with various redis commands to see what they return, how to parse the responses as well as an ability to run any redis commands that may not be yet supported / wrapped in a clojure function.
 
@@ -525,7 +682,7 @@ parsing replies with `:expect` function:
 ;; 42
 ```
 
-### run/add tests
+## run/add tests
 
 ```bash
 $ make test
@@ -534,7 +691,7 @@ $ make test
 when running tests, make sure the [embedded redis config](test/resources/config.edn#L4) matches your OS.
 as well as a path to redis server and redis modules.
 
-## license
+# license
 
 Copyright © 2021 tolitius
 

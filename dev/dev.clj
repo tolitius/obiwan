@@ -177,3 +177,5 @@
   (search/ft-sugadd conn "songs""Purple Haze" 1 {:payload "Jimmy"})
 
   (pprint (search/ft-sugget conn "songs" "mm" {:fuzzy? true :max 42}))
+
+  )
