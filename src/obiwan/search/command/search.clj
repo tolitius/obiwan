@@ -1,5 +1,6 @@
 (ns obiwan.search.command.search
-  (:require [obiwan.core :as oc]
+  (:require [clojure.string :as s]
+            [obiwan.core :as oc]
             [obiwan.search.command.core :as cmd]
             [obiwan.tools :as t])
   (:import [redis.clients.jedis JedisPool]))
@@ -36,6 +37,22 @@
 ;;           [SORTBY {field} [ASC|DESC]]
 ;;           [LIMIT offset num]
 
+(deftype Sort [by order]
+  cmd/Parameter
+  (validate [param]
+    (if (and (seq by)
+             (#{:asc :desc} order))
+      {:valid? true}
+      {:valid? false
+       :spec "sort needs a {prop order} map, where order needs to be :asc or :desc"
+       :what-i-see {:args by}}))
+  (redisify [param]
+    ["SORTBY" by (-> order name s/upper-case)]))
+
+(defn make-sort [{:keys [by]}]
+  (let [[field order] (first by)]
+    (Sort. field order)))
+
 (deftype Limit [offset number]
   cmd/Parameter
   (validate [param]
@@ -59,23 +76,29 @@
                  (t/bytes->map v)})
               (partition 2 (rest xs)))})
 
+(defn opt->command [opt]
+  (if-not (map? opt)
+    (throw (RuntimeException. (str "invalid search option. search options should be a vector of maps with keys"
+                                   " matching FT.SEARCH spec. for example: "
+                                   "[{:sort {:by {\"field-name\" :desc}}} {:limit {:number 0 :offset 42}}]")))
+    (let [[oname args] (first opt)]
+      (case oname
+        :sort  (make-sort args)
+        :limit (make-limit args)
+        (throw (RuntimeException. (str "'" oname
+                                       "' search option is not (yet?) implemented for " opt)))))))
+
 (defn search-index [^JedisPool redis
                      iname
                      query
-                     {:keys [limit
-                             ;; TODO: add other search options
-                             ]}]
-  (let [separator "-@@@-"    ;; TODO: needs a cleaner idea that would still keep not interfering with qeury strings
-        params (cond-> {}
-                 (seq limit) (assoc :limit (make-limit limit))
-                 ;; TODO: add other definitions opts
-                 )
-        opts (-> [iname
-                  query
-                  (-> params vals cmd/redisify-params)]
-                  (t/xs->str separator)
-                  (t/tokenize separator)
-                  (->> (into-array String)))
+                     opts]
+  (let [params (mapv opt->command opts)
+        opts (->> params
+                  (mapcat cmd/redisify)
+                  (cons query)
+                  (cons iname)
+                  ; debug
+                  (into-array String))
         send-search #(-> (t/send-command cmd/FT_SEARCH opts %)
                          t/binary-multi-bulk-reply)]
     (-> (oc/op redis send-search)

@@ -46,6 +46,17 @@
                                           "mass" "639000000000000000000000"}}]}
          (search/ft-search tt/conn "solar-system" "red | blue"))))
 
+(deftest should-sort-search-results
+  (make-solar-system tt/conn)
+  (is (= {:found 2
+          :results [{"solar:planet:mars" {"age" "4.603 billion years"
+                                          "nick" "the red planet"
+                                          "mass" "639000000000000000000000"}}
+                    {"solar:planet:earth" {"age" "4.543 billion years"
+                                           "nick" "the blue planet"
+                                           "mass" "5974000000000000000000000"}}]}
+         (search/ft-search tt/conn "solar-system" "red | blue"
+                                                  [{:sort {:by {"mass" :asc}}}]))))
 
 ;; suggest
 

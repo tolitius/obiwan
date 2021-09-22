@@ -122,7 +122,7 @@
   (if-not (map? opt)
     (throw (RuntimeException. (str "invalid aggregate option. aggregate options should be a vector of maps with keys"
                                    " matching FT.AGGREGATE spec. for example: "
-                                   "[{:group-by [\"@prop\"] :reduce [{...}]} {:limit {:number 0 :offset 42}}]")))
+                                   "[{:group {:by [\"@field-name\"] :reduce [{...}]}} {:limit {:number 0 :offset 42}}]")))
     (let [[oname args] (first opt)]
       (case oname
         :group (make-group-by args)
@@ -143,8 +143,7 @@
                        iname
                        query
                        opts]
-  (let [separator "-@@@-"    ;; TODO: needs a cleaner idea that would still keep not interfering with qeury strings
-        params (mapv opt->command opts)
+  (let [params (mapv opt->command opts)
         opts (->> params
                   (mapcat cmd/redisify)
                   (cons query)

@@ -310,6 +310,24 @@ and.. we'll use `ft-search` function to search:
 this is the full spec of the redis search native [FT.SEARCH](https://oss.redis.com/redisearch/Commands/#ftsearch) command.<br/>
 also check out a very helpful query syntax reference in the redis search [docs](https://oss.redis.com/redisearch/Query_Syntax/).
 
+as per spec more search params may be passed _after_ the query:
+
+```clojure
+=> (search/ft-search conn "solar-system" "red | blue"
+                                         [{:sort {:by {"mass" :asc}}}])
+
+{:found 2,
+ :results
+ [{"solar:planet:mars"
+   {"age" "4.603 billion years",
+    "nick" "the red planet",
+    "mass" "639000000000000000000000"}}
+  {"solar:planet:earth"
+   {"age" "4.543 billion years",
+    "nick" "the blue planet",
+    "mass" "5974000000000000000000000"}}]}
+```
+
 ## aggregations
 
 redis searh relies on [FT.AGGREGATE](https://oss.redis.com/redisearch/Commands/#ftaggregate) command to aggregate search query results directly on a redis server.
