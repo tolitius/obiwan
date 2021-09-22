@@ -58,6 +58,24 @@
          (search/ft-search tt/conn "solar-system" "red | blue"
                                                   [{:sort {:by {"mass" :asc}}}]))))
 
+
+(deftest should-sort-search-and-limit
+  (make-solar-system tt/conn)
+  (is (= {:found 4
+          :results [{"solar:planet:mars" {"age" "4.603 billion years"
+                                          "nick" "the red planet"
+                                          "mass" "639000000000000000000000"}}
+                    {"solar:planet:pluto" {"age" "4.5 billion years"
+                                           "nick" "tombaugh regio"
+                                           "mass" "13090000000000000000000"}}
+                    {"solar:planet:moon:charon" {"age" "4.5 billion years"
+                                                 "planet" "pluto"
+                                                 "nick" "char"
+                                                 "mass" "1586000000000000000000"}}]}
+         (search/ft-search tt/conn "solar-system" "*"
+                                                  [{:sort {:by {"mass" :desc}}}
+                                                   {:limit {:offset 1 :number 3}}]))))
+
 ;; suggest
 
 (defn make-suggestion-dictionary [conn]

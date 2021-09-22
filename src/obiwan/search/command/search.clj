@@ -63,7 +63,7 @@
          :spec "offset and number should be integers"
          :what-i-see {:offset offset :number number}}))
   (redisify [param]
-    (str "LIMIT " offset " " number)))
+    ["LIMIT" (str offset) (str number)]))
 
 (defn make-limit [{:keys [offset number]}]
   (Limit. offset number))
