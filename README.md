@@ -293,7 +293,8 @@ and.. we'll use `ft-search` function to search:
 > _Neo: "both"_
 
 ```clojure
-=> (search/ft-search conn "solar-system" "blue | red")
+=> (search/ft-search conn "solar-system"
+                          "blue | red")
 
 ;; {:found 2,
 ;;  :results
@@ -329,8 +330,9 @@ as per spec more search params may be passed _after_ the query:
 ```
 
 ```clojure
-=> (search/ft-search conn "solar-system" "*" [{:sort {:by {"mass" :desc}}}
-                                              {:limit {:offset 1 :number 3}}])
+=> (search/ft-search conn "solar-system" "*"
+                                         [{:sort {:by {"mass" :desc}}}
+                                          {:limit {:offset 1 :number 3}}])
 
 ;; {:found 4,             ;; but showing 3 due to the limit
 ;;  :results
