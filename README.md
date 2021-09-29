@@ -729,7 +729,7 @@ parsing replies with `:expect` function:
 $ make test
 ```
 
-when running tests, make sure the [embedded redis config](test/resources/config.edn#L4) matches your OS.
+when running tests, make sure the [embedded redis config](test/resources/config.edn#L3-L6) matches your OS.
 as well as a path to redis server and redis modules.
 
 # license
