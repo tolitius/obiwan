@@ -21,17 +21,23 @@
 (defn create-pool
   ([]
    (create-pool {}))
-  ([{:keys [host port pool timeout password]
+  ([{:keys [host port pool timeout password ssl?]
      :or {host "127.0.0.1"
           port 6379
           timeout Protocol/DEFAULT_TIMEOUT
+          ssl? false
           pool {:size 42
                 :max-wait 30000}}}]
    (let [conf (doto (JedisPoolConfig.)
                 (.setMaxTotal (pool :size))
                 (.setMaxWaitMillis (pool :max-wait)))]
      (println (str "connecting to Redis " host ":" port ", timeout: " timeout ", pool: " pool))
-     (JedisPool. conf ^String host ^int port ^int timeout ^String password))))
+     (JedisPool. conf
+                 ^String host
+                 ^int port
+                 ^int timeout
+                 ^String password
+                 ^Boolean ssl?))))
 
 (defn close-pool [pool]
   (println "disconnecting from Redis:" pool)
