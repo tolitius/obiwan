@@ -21,11 +21,12 @@
 (defn create-pool
   ([]
    (create-pool {}))
-  ([{:keys [host port pool timeout password ssl?]
+  ([{:keys [host port pool timeout username password ssl?]
      :or {host "127.0.0.1"
           port 6379
           timeout Protocol/DEFAULT_TIMEOUT
           ssl? false
+          username "default"
           pool {:size 42
                 :max-wait 30000}}}]
    (let [conf (doto (JedisPoolConfig.)
@@ -36,6 +37,7 @@
                  ^String host
                  ^int port
                  ^int timeout
+                 ^String username
                  ^String password
                  ^Boolean ssl?))))
 
