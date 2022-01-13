@@ -81,7 +81,7 @@
   (Field. name "GEO" sortable? no-index?))
 
 (defn make-tag-field [{:keys [name separator sortable? no-index?]}]
-  (Field. name "GEO" sortable? no-index?)) ;; TODO: add \"tag\" opts support (separator)
+  (Field. name "TAG" sortable? no-index?)) ;; TODO: add \"tag\" opts support (separator)
 
 (defn add-field [field]
   (let [maker (case (t/map-ns field)

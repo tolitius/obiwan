@@ -97,6 +97,11 @@
        (map bytes->str)
        (apply hash-map)))
 
+(defn m->array [m]
+  (->> m
+       (mapcat identity)
+       (into-array String)))
+
 (defn fmv
   "apply f to each value v of map m"
   [m f]

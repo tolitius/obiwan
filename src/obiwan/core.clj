@@ -1,6 +1,7 @@
 (ns obiwan.core
   (:refer-clojure :exclude [get set type keys])
-  (:require [obiwan.tools :as t])
+  (:require [obiwan.commands :as c]
+            [obiwan.tools :as t])
   (:import [redis.clients.jedis Jedis
                                 Protocol
                                 JedisPool
@@ -20,17 +21,23 @@
 (defn create-pool
   ([]
    (create-pool {}))
-  ([{:keys [host port pool timeout password]
+  ([{:keys [host port pool timeout password ssl?]
      :or {host "127.0.0.1"
           port 6379
           timeout Protocol/DEFAULT_TIMEOUT
+          ssl? false
           pool {:size 42
                 :max-wait 30000}}}]
    (let [conf (doto (JedisPoolConfig.)
                 (.setMaxTotal (pool :size))
                 (.setMaxWaitMillis (pool :max-wait)))]
      (println (str "connecting to Redis " host ":" port ", timeout: " timeout ", pool: " pool))
-     (JedisPool. conf ^String host ^int port ^int timeout ^String password))))
+     (JedisPool. conf
+                 ^String host
+                 ^int port
+                 ^int timeout
+                 ^String password
+                 ^Boolean ssl?))))
 
 (defn close-pool [pool]
   (println "disconnecting from Redis:" pool)
@@ -81,99 +88,183 @@
         reply (->> say-hello
                    (op redis)
                    t/bytes->map)
-        modules (mapv t/bytes->map (get reply "modules"))] ;; TODO: later recursive bytes->type
+        modules (mapv t/bytes->map
+                      (clojure.core/get reply "modules"))] ;; TODO: later recursive bytes->type
     (assoc reply "modules" modules)))
 
-
-;; wrap Java methods to make them composable
-
+;; TODO: add comman options (most likely via a function that would add options)
+;;       to preserve the "direct" and "pipelining" interfaces
+;;
+;;       add pipelining to basic commands
 
 ;; hash
 
 (defn ^{:doc {:obiwan-doc
               "takes in a jedis connection pool, a hash name and a field name if present, returns a field name value"}}
-      hget [^JedisPool redis h f]
-  (op redis #(.hget % h f)))
+  hget
+  ([h f] (c/hget h f))
+  ([^JedisPool redis h f]
+   (op redis (c/hget h f))))
 
-(defn hmget [^JedisPool redis h fs]
-  (into [] (op redis #(.hmget % h (into-array String fs)))))
+(defn hset
+  ([h m] (c/hset h m))
+  ([redis h m]
+   (op redis (c/hset h m))))
 
-(defn hgetall [^JedisPool redis h]
-  (into {} (op redis #(.hgetAll % h))))
+(defn hmget
+  ([h fs] (c/hmget h fs))
+  ([^JedisPool redis h fs]
+   (into [] (op redis (c/hmget h fs)))))
 
-(defn hset [redis h f v]
-  (op redis #(.hset % h f v)))
+(defn hmset
+  ([h m] (c/hmset h m))
+  ([redis h m]
+   (op redis (c/hmset h m))))
 
-(defn hmset [redis h m]
-  (op redis #(.hmset % h m)))
+(defn hgetall
+  ([h] (c/hgetall h))
+  ([^JedisPool redis h]
+   (into {} (op redis (c/hgetall h)))))
 
-(defn hdel [redis h & v]
-  (op redis #(.hdel % h (into-array String v))))
+(defn hdel
+  ([h vs] (c/hdel h vs))
+  ([redis h vs]
+   (op redis (c/hdel h vs))))
 
 ;; sorted set
 
-(defn zadd [redis s m]
-  (op redis #(.zadd % s m)))
+(defn zadd
+  ([k m] (c/zadd k m))
+  ([redis k m]
+   (op redis #(.zadd % k m))))
 
-(defn zrange [redis s zmin zmax]
-  (op redis #(.zrange % s zmin zmax)))
+(defn zrange
+  ([k zmin zmax] (c/zrange k zmin zmax))
+  ([redis k zmin zmax]
+   (op redis #(.zrange % k zmin zmax))))
 
 ;; set
 
-(defn smembers [redis s]
-  (op redis #(.smembers % s)))
+(defn smembers
+  ([s] (c/smembers s))
+  ([redis s]
+   (op redis (c/smembers s))))
 
-(defn scard [redis s]
-  (op redis #(.scard % s)))
+(defn scard
+  ([s] (c/scard s))
+  ([redis s]
+   (op redis (c/scard s))))
 
-(defn sismember [redis s v]
-  (op redis #(.sismember % s v)))
+(defn sismember
+  ([s v] (c/smembers s v))
+  ([redis s v]
+   (op redis (c/smembers s v))))
 
-(defn sadd [redis s v]
-  (op redis #(.sadd % s (into-array
-                          String [v]))))
+(defn sadd
+  ([s vs] (c/sadd s vs))
+  ([redis s vs]
+   (op redis (c/sadd s vs))))
 
-(defn srem [redis s v]
-  (op redis #(.srem % s (into-array
-                         String [v]))))
+(defn srem
+  ([s vs] (c/srem s vs))
+  ([redis s vs]
+   (op redis (c/srem s vs))))
 
 ;; basic operations
 
-(defn set [redis k v]
-  (op redis #(.set % k v)))
+(defn set
+  ([k v] (c/set k v))
+  ([redis k v]
+   (op redis (c/set k v))))
 
-(defn mset [redis & kv]
-  (op redis #(.mset % (into-array kv))))
+(defn get
+  ([k] (c/get k))
+  ([redis k]
+   (op redis (c/get k))))
 
-(defn get [redis k]
-  (op redis #(.get % k)))
+(defn mset
+  ([m] (c/mset m))
+  ([redis m]
+   (op redis (c/mset m))))
 
-(defn mget [redis & k]
-  (op redis #(.mget % (into-array k))))
+(defn mget
+  ([ks] (c/mget ks))
+  ([redis ks]
+   (op redis (c/mget ks))))
 
-(defn del [redis & k]
-  (op redis #(.del % (into-array k))))
+(defn del
+  ([ks] (c/del ks))
+  ([redis ks]
+   (op redis (c/del ks))))
 
-(defn exists [redis & v]
-  (op redis #(.exists % (into-array v))))
+(defn exists
+  ([vs] (c/exists vs))
+  ([redis vs]
+   (op redis (c/exists vs))))
 
-(defn type [redis k]
-  (op redis #(.type % k)))
+(defn type
+  ([k] (c/type k))
+  ([redis k]
+   (op redis (c/type k))))
 
-(defn keys [redis k]
-  (op redis #(.keys % k)))
+(defn keys
+  ([k] (c/keys k))
+  ([redis k]
+   (op redis (c/keys k))))
 
-(defn incr [redis k]
-  (op redis #(.incr % k)))
+(defn incr
+  ([k] (c/incr k))
+  ([redis k]
+   (op redis (c/incr k))))
 
-(defn incr-by [redis k v]
-  (op redis #(.incrBy % k v)))
+(defn incr-by
+  ([k v] (c/incr-by k v))
+  ([redis k v]
+   (op redis (c/incr-by k v))))
 
-(defn decr [redis k]
-  (op redis #(.decr % k)))
+(defn decr
+  ([k] (decr k))
+  ([redis k]
+   (op redis (c/decr k))))
 
-(defn decr-by [redis k v]
-  (op redis #(.decrBy % k v)))
+(defn decr-by
+  ([k v] (c/decr-by k v))
+  ([redis k v]
+   (op redis (c/decr-by k v))))
+
+;; ops
+
+(defn module-load
+  ([path]
+   (c/module-load path))
+  ([redis path]
+   (op redis (c/module-load path))))
+
+(defn module-unload
+  ([mname]
+   (c/module-unload mname))
+  ([redis mname]
+   (op redis (c/module-unload mname))))
+
+;; pipeline
+
+(defn make-pipeline [conn]
+  (.pipelined conn))
+
+(defn sync-pipeline [pipe]
+  (.sync pipe))
+
+(defn realize-responses [rs]
+  (mapv #(.get %) rs))
+
+(defn pipeline [redis commands]
+  (op redis
+      (fn [conn]
+        (let [pipe (make-pipeline conn)
+              rs (mapv #(% pipe)
+                       commands)]
+          (sync-pipeline pipe)
+          (realize-responses rs)))))
 
 ;; scaning things
 
