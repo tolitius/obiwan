@@ -8,7 +8,7 @@
 
 (defonce project
   (let [lib        'com.tolitius/obiwan
-        version    "0.1.4801"
+        version    "0.1.4802"
         target-dir "target"]
     {:lib lib
      :description "redis clojure client based on jedis"
