@@ -21,10 +21,11 @@
 (defn create-pool
   ([]
    (create-pool {}))
-  ([{:keys [host port pool timeout username password ssl?]
+  ([{:keys [host port pool timeout username password database-index ssl?]
      :or {host "127.0.0.1"
           port 6379
           timeout Protocol/DEFAULT_TIMEOUT
+          database-index Protocol/DEFAULT_DATABASE
           ssl? false
           pool {:size 42
                 :max-wait 30000}}}]
@@ -38,6 +39,7 @@
                  ^int timeout
                  ^String username
                  ^String password
+                 ^int database-index
                  ^Boolean ssl?))))
 
 (defn close-pool [pool]
