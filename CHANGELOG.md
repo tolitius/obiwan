@@ -1,9 +1,14 @@
+# 0.1.4804
+
+* jedis dep to 3.9.0
+* expose `min-evictable-idle-time` connection pool prop
+
 # 0.1.475
 
 * add APPLY to FT.AGGREGATE
 * fix FT.CREATE "TAG" refence
 
-# 0.1.475
+# 0.1.474
 
 * add module load/unload commands
 * add search test harness and search / suggest tests

@@ -9,6 +9,7 @@
                                 ScanParams
                                 ScanResult]
            [redis.clients.jedis.exceptions JedisConnectionException]
+           [java.time Duration]
            [org.apache.commons.pool2.impl GenericObjectPool]))
 
 (defn new-conn [^JedisPool pool]
@@ -21,17 +22,22 @@
 (defn create-pool
   ([]
    (create-pool {}))
-  ([{:keys [host port pool timeout username password database-index ssl?]
+  ([{:keys [host port pool timeout
+            username password
+            database-index ssl?
+            min-evictable-idle-time]
      :or {host "127.0.0.1"
           port 6379
           timeout Protocol/DEFAULT_TIMEOUT
           database-index Protocol/DEFAULT_DATABASE
           ssl? false
           pool {:size 42
-                :max-wait 30000}}}]
+                :max-wait 30000
+                :min-evictable-idle-time 60000}}}]
    (let [conf (doto (JedisPoolConfig.)
                 (.setMaxTotal (pool :size))
-                (.setMaxWaitMillis (pool :max-wait)))]
+                (.setMaxWaitMillis (pool :max-wait))
+                (.setMinEvictableIdleTime (Duration/ofMillis (pool :min-evictable-idle-time))))]
      (println (str "connecting to Redis " host ":" port ", timeout: " timeout ", pool: " pool))
      (JedisPool. conf
                  ^String host
