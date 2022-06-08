@@ -24,20 +24,20 @@
    (create-pool {}))
   ([{:keys [host port pool timeout
             username password
-            database-index ssl?
-            min-evictable-idle-time]
+            database-index ssl?]
      :or {host "127.0.0.1"
           port 6379
           timeout Protocol/DEFAULT_TIMEOUT
           database-index Protocol/DEFAULT_DATABASE
           ssl? false
-          pool {:size 42
-                :max-wait 30000
-                :min-evictable-idle-time 60000}}}]
+          pool {}}}]
    (let [conf (doto (JedisPoolConfig.)
-                (.setMaxTotal (pool :size))
-                (.setMaxWaitMillis (pool :max-wait))
-                (.setMinEvictableIdleTime (Duration/ofMillis (pool :min-evictable-idle-time))))]
+                (.setMaxTotal (or (pool :size)
+                                  42))
+                (.setMaxWaitMillis (or (pool :max-wait)
+                                       30000))
+                (.setMinEvictableIdleTime (Duration/ofMillis (or (pool :min-evictable-idle-time)
+                                                                 60000))))]
      (println (str "connecting to Redis " host ":" port ", timeout: " timeout ", pool: " pool))
      (JedisPool. conf
                  ^String host

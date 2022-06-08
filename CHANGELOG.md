@@ -1,3 +1,7 @@
+# 0.1.4805
+
+* add defaults to jedis pool config
+
 # 0.1.4804
 
 * jedis dep to 3.9.0
