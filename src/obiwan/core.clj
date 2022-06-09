@@ -25,17 +25,20 @@
   ([{:keys [host port timeout
             username password
             database-index ssl?
-            size max-wait]
+            size
+            max-wait max-idle]
      :or {host "127.0.0.1"
           port 6379
           timeout Protocol/DEFAULT_TIMEOUT
           database-index Protocol/DEFAULT_DATABASE
           ssl? false
           size 42
-          max-wait 30000}
+          max-wait 30000
+          max-idle 8}
      :as opts}]
    (let [conf (doto (JedisPoolConfig.)
                 (.setMaxTotal size)
+                (.setMaxIdle max-idle)
                 (.setMaxWaitMillis max-wait))]
      (println (str "connecting to Redis " host ":" port ", timeout: " timeout ", config: "
                    (dissoc opts :username :password)))

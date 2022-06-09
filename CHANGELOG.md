@@ -1,3 +1,7 @@
+# 0.1.4808
+
+* add optional [max-idle](https://commons.apache.org/proper/commons-pool/apidocs/org/apache/commons/pool2/impl/GenericObjectPool.html#setMaxIdle-int-) to the pool for heavier loads
+
 # 0.1.4807
 
 * upgrade to Jedis 4.2.0
