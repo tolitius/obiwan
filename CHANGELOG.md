@@ -1,3 +1,7 @@
+# 0.1.4806
+
+* switch to the core GenericObjectPoolConfig
+
 # 0.1.4805
 
 * add defaults to jedis pool config
