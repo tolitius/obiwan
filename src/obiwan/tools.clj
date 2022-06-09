@@ -1,6 +1,6 @@
 (ns obiwan.tools
   (:require [clojure.string :as s])
-  (:import [redis.clients.jedis BinaryJedis Connection]
+  (:import [redis.clients.jedis Jedis Connection]
            [redis.clients.jedis.util SafeEncoder]
            [redis.clients.jedis.commands ProtocolCommand]))
 
@@ -34,7 +34,7 @@
     (. m (invoke obj args))))
 
 (defn check-is-in-multi-or-pipeline [conn]
-  (super-private-method BinaryJedis
+  (super-private-method Jedis
                         conn
                         "checkIsInMultiOrPipeline"))
 

@@ -5,9 +5,9 @@
   (:import [redis.clients.jedis Jedis
                                 Protocol
                                 JedisPool
-                                JedisPoolConfig
-                                ScanParams
-                                ScanResult]
+                                JedisPoolConfig]
+           [redis.clients.jedis.params ScanParams]
+           [redis.clients.jedis.resps ScanResult]
            [redis.clients.jedis.exceptions JedisConnectionException]
            [java.time Duration]
            [org.apache.commons.pool2.impl GenericObjectPool GenericObjectPoolConfig]))
@@ -32,12 +32,14 @@
           database-index Protocol/DEFAULT_DATABASE
           ssl? false
           size 42
-          max-wait 30000}}]
-   (let [pconf (doto (GenericObjectPoolConfig.)
-                 (.setMaxTotal size)
-                 (.setMaxWaitMillis max-wait))]
-     (println (str "connecting to Redis " host ":" port ", timeout: " timeout ", config: " pconf))
-     (JedisPool. pconf
+          max-wait 30000}
+     :as opts}]
+   (let [conf (doto (JedisPoolConfig.)
+                (.setMaxTotal size)
+                (.setMaxWaitMillis max-wait))]
+     (println (str "connecting to Redis " host ":" port ", timeout: " timeout ", config: "
+                   (dissoc opts :username :password)))
+     (JedisPool. conf
                  ^String host
                  ^int port
                  ^int timeout
@@ -47,7 +49,7 @@
                  ^Boolean ssl?))))
 
 (defn close-pool [pool]
-  (println "disconnecting from Redis:" pool)
+  (println "disconnecting from Redis")
   (.destroy pool)
   :pool-closed)
 

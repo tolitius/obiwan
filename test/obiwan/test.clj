@@ -80,10 +80,12 @@
                  "uranus"  7.0
                  "neptune" 8.0
                  "pluto"   9.0}]
-    (is (= (count planets)             (redis/zadd tt/conn "planets" planets)))
-    (is (= #{"mars" "jupiter" "saturn"
-             "uranus" "neptune"}       (redis/zrange tt/conn "planets" 3 7)))
-    (is (= (-> planets keys set)       (redis/zrange tt/conn "planets" 0 -1)))))
+    (is (= (count planets)               (redis/zadd tt/conn "planets" planets)))
+    (is (= ["mars" "jupiter" "saturn"
+            "uranus" "neptune"]          (redis/zrange tt/conn "planets" 3 7)))
+    (is (= ["mercury" "venus" "earth"
+            "mars" "jupiter" "saturn"
+            "uranus" "neptune" "pluto"]  (redis/zrange tt/conn "planets" 0 -1)))))
 
 (defn run-tests []
   (t/run-all-tests #"obiwan.test.*"))

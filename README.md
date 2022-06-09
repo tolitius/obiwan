@@ -60,8 +60,12 @@ in order to connect to a different host, port, with a different number of thread
 => (def conn (redis/create-pool {:host "dotkam.com"
                                  :port 4242
                                  :timeout 42000
-                                 :pool {:size 4
-                                        :max-wait 15000}
+                                 :size 4
+                                 :max-wait 15000
+                                 :timeout 30000
+                                 :ssl? true
+                                 :database-index 42
+                                 :username "mando"
                                  :password "|th1s is the w@y|"}))
 ;; #'user/conn
 ```
@@ -71,9 +75,11 @@ by default the config map is:
 ```clojure
 {:host "127.0.0.1"
  :port 6379
- :timeout Protocol/DEFAULT_TIMEOUT ;; 2 seconds as per Jedis' protocol
- :pool {:size 42
-        :max-wait 30000}}
+ :timeout Protocol/DEFAULT_TIMEOUT          ;; 2 seconds as per Jedis' protocol
+ :database-index Protocol/DEFAULT_DATABASE  ;; 0 as per Jedis' protocol
+ :ssl? false
+ :size 42
+ :max-wait 30000}
 ```
 
 closing the pool:
@@ -135,10 +141,10 @@ here are examples on how to work with some of them:
 ;; 9
 
 => (redis/zrange conn "planets" 3 7)
-;; #{"mars" "jupiter" "saturn" "uranus" "neptune"}
+;; ["mars" "jupiter" "saturn" "uranus" "neptune"]
 
 => (redis/zrange conn "planets" 0 -1)
-;; #{"mercury" "venus" "earth" "mars" "jupiter" "saturn" "uranus" "neptune" "pluto"}
+;; ["mercury" "venus" "earth" "mars" "jupiter" "saturn" "uranus" "neptune" "pluto"]
 ```
 
 ## what's in redis
@@ -564,7 +570,7 @@ let's try them all together:
 => (search/ft-sugget conn "songs" "mm" {:fuzzy? true
                                         :with-payloads? true
                                         :with-scores? true
-                                        :max 42}))
+                                        :max 42})
 ;; [{:suggestion "Immigrant Song",
 ;;   :score "0.037535253912210464",
 ;;   :payload "Led Zeppelin"}
@@ -734,7 +740,7 @@ as well as a path to redis server and redis modules.
 
 # license
 
-Copyright © 2021 tolitius
+Copyright © 2022 tolitius
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.

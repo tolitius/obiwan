@@ -1,3 +1,8 @@
+# 0.1.4807
+
+* upgrade to Jedis 4.2.0
+* switch back to JedisPool
+
 # 0.1.4806
 
 * switch to the core GenericObjectPoolConfig
