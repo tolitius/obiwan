@@ -20,6 +20,14 @@
     (is (= "OK" (redis/set tt/conn k v)))
     (is (= v    (redis/get tt/conn k)))))
 
+(deftest should-set-with-ttl
+  (let [k "foo"
+        v "bar"]
+    (is (= "OK" (redis/set tt/conn k v {:ex 1})))
+    (is (= v    (redis/get tt/conn k)))
+    (Thread/sleep 1042)
+    (is (nil? (redis/get tt/conn k)))))
+
 (deftest should-mset-and-mget
   (let [m {"foo" "bar"
            "baz" "moo"}]

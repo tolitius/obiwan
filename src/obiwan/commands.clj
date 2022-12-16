@@ -1,6 +1,7 @@
 (ns obiwan.commands
   (:refer-clojure :exclude [get set type keys])
-  (:require [obiwan.tools :as t]))
+  (:require [obiwan.tools :as t])
+  (:import [redis.clients.jedis.params SetParams]))
 
 ;; wrap Java methods to make them composable
 
@@ -63,8 +64,23 @@
 
 ;; basic operations
 
-(defn set [k v]
-  #(.set % k v))
+(defn ->set-params [{:keys [xx nx px ex exat pxat keepttl get]}]
+  (cond-> (SetParams/setParams)
+    xx (.xx)
+    nx (.nx)
+    px (.px px)
+    ex (.ex ex)
+    exat (.exAt exat)
+    pxat (.pxAt pxat)
+    keepttl (.keepttl)
+    get (.get)))
+
+(defn set
+  ([k v]
+   #(.set % k v))
+  ([k v params]
+   (let [ps (->set-params params)]
+     #(.set % k v ps))))
 
 (defn get [k]
   #(.get % k))

@@ -187,7 +187,9 @@
 (defn set
   ([k v] (c/set k v))
   ([redis k v]
-   (op redis (c/set k v))))
+   (op redis (c/set k v)))
+  ([redis k v params]
+   (op redis (c/set k v params))))
 
 (defn get
   ([k] (c/get k))

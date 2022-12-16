@@ -1,3 +1,20 @@
+# 0.1.4809
+
+* add params to `set` ([what params](https://redis.io/commands/set/)?)
+
+```clojure
+=> (redis/set conn "foo:bar:checksum" "814e2a88-5acb-4fa1-9a2a-c4c7e82ee6e2"
+                   {:ex 3})
+"OK"
+
+=> (redis/get conn "foo:bar:checksum")
+"814e2a88-5acb-4fa1-9a2a-c4c7e82ee6e2"
+
+;; 3 seconds later
+=> (redis/get conn "foo:bar:checksum")
+nil
+```
+
 # 0.1.4808
 
 * add optional [max-idle](https://commons.apache.org/proper/commons-pool/apidocs/org/apache/commons/pool2/impl/GenericObjectPool.html#setMaxIdle-int-) to the pool for heavier loads
