@@ -23,10 +23,16 @@
 (defn hset [h m]
   #(.hset % h m))
 
-(defn hmget [h fs]
+(defn hmget [redis h fs]
+  (.hmget redis h (into-array String fs)))
+
+(defn hmset [redis h m]
+  (.hmset redis h m))
+
+#_(defn hmget [h fs]
   #(.hmget % h (into-array String fs)))
 
-(defn hmset [h m]
+#_(defn hmset [h m]
   #(.hmset % h m))
 
 (defn hgetall [h]

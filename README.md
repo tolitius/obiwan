@@ -694,15 +694,30 @@ this is usefult to experiment with various redis commands to see what they retur
 ```
 
 ```clojure
-=> (redis/say conn "PING")
+=> (redis/say conn "DBSIZE")
+;; 42
+```
+
+passing arguments:
+
+```clojure
+=> (redis/say conn "COMMAND" {:args "COUNT"})
+;; 264
+```
+
+parsing replies with `:parse` function:
+
+```clojure
+=> (redis/say conn "PING" {:parse t/bytes->str})
 ;; "PONG"
 
-=> (redis/say conn "ECHO" {:args "HAYA!"})
+=> (redis/say conn "ECHO" {:args "HAYA!"
+                           :parse t/bytes->str})
 ;; "HAYA!"
 
 ```
 ```clojure
-=> (print (redis/say conn "INFO"))
+=> (print (redis/say conn "INFO" {:parse t/bytes->str}))
 
 ;; # Server
 ;; redis_version:6.2.5
@@ -715,18 +730,6 @@ this is usefult to experiment with various redis commands to see what they retur
 ;; ...
 ;; # Modules
 ;; module:name=search,ver=999999,api=1,filters=0,usedby=[],using=[],options=[]
-```
-
-parsing replies with `:expect` function:
-
-```clojure
-=> (redis/say conn "COMMAND" {:args "COUNT"
-                              :expect t/integer-reply})
-;; 264
-```
-```clojure
-=> (redis/say conn "DBSIZE" {:expect t/integer-reply})
-;; 42
 ```
 
 ## run/add tests

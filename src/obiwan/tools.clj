@@ -1,6 +1,6 @@
 (ns obiwan.tools
   (:require [clojure.string :as s])
-  (:import [redis.clients.jedis Jedis Connection]
+  (:import [redis.clients.jedis Jedis UnifiedJedis JedisPooled Connection]
            [redis.clients.jedis.util SafeEncoder]
            [redis.clients.jedis.commands ProtocolCommand]))
 
@@ -16,7 +16,7 @@
                (filterv #(and (= mname   (.getName %))
                               (= mparams (apply str (.getParameterTypes %)))))
                first)]
-    ;; (println "calling " m ", with params:" mparams ", and args:" args)
+    (println "calling " m ", with params:" mparams ", and args:" args)
     (if (seq args)
       (. m (invoke obj (into-array Object args)))
       (. m (invoke obj (into-array Object []))))))
@@ -43,23 +43,21 @@
     (getRaw [this]
       (SafeEncoder/encode cname))))
 
-(defn send-command [cmd args conn]
-  (let [client (.getClient conn)]
-    (check-is-in-multi-or-pipeline conn)
-    (if args
-      (super-public-method Connection
-                           client
-                           {:mname "sendCommand"
-                            ; :mparams "interface redis.clients.jedis.commands.ProtocolCommandclass [[B"}
-                            :mparams "interface redis.clients.jedis.commands.ProtocolCommandclass [Ljava.lang.String;"}
-                           cmd
-                           args)
-      (super-public-method Connection
-                           client
-                           {:mname "sendCommand"
-                            :mparams "interface redis.clients.jedis.commands.ProtocolCommand"}
-                           cmd))
-    client))
+(defn send-command [conn cmd args]
+  ;; (check-is-in-multi-or-pipeline conn)
+  (if args
+    (super-public-method UnifiedJedis
+                         conn
+                         {:mname "sendCommand"
+                          ; :mparams "interface redis.clients.jedis.commands.ProtocolCommandclass [[B"}
+                          :mparams "interface redis.clients.jedis.commands.ProtocolCommandclass [Ljava.lang.String;"}
+                         cmd
+                         args)
+    (super-public-method UnifiedJedis
+                         conn
+                         {:mname "sendCommand"
+                          :mparams "interface redis.clients.jedis.commands.ProtocolCommand"}
+                         cmd)))
 
 (defn integer-reply [client]
   (.getIntegerReply client))

@@ -5,14 +5,16 @@
   (:import [redis.clients.jedis Jedis
                                 Protocol
                                 JedisPool
+                                JedisPooled
                                 JedisPoolConfig]
+           [redis.clients.jedis.util Pool]
            [redis.clients.jedis.params ScanParams]
            [redis.clients.jedis.resps ScanResult]
            [redis.clients.jedis.exceptions JedisConnectionException]
            [java.time Duration]
            [org.apache.commons.pool2.impl GenericObjectPool GenericObjectPoolConfig]))
 
-(defn new-conn [^JedisPool pool]
+(defn new-conn [^Pool pool]
   (.getResource pool))
 
 (defn op [pool f]
@@ -42,18 +44,20 @@
                 (.setMaxWaitMillis max-wait))]
      (println (str "connecting to Redis " host ":" port ", timeout: " timeout ", config: "
                    (dissoc opts :username :password)))
-     (JedisPool. conf
-                 ^String host
-                 ^int port
-                 ^int timeout
-                 ^String username
-                 ^String password
-                 ^int database-index
-                 ^Boolean ssl?))))
+     (JedisPooled. conf
+                  ^String host
+                  ^int port
+                  ^int timeout
+                  ^String username
+                  ^String password
+                  ^int database-index
+                  ^Boolean ssl?))))
 
-(defn close-pool [pool]
+(defn close-pool [redis]
   (println "disconnecting from Redis")
-  (.destroy pool)
+  (-> redis
+      .getPool
+      .destroy)
   :pool-closed)
 
 (defn connected? [pool]
@@ -64,42 +68,37 @@
       false)))
 
 ;; TODO: waiting on 4.x Jedis branch to open up the BaseGenericObjectPool getters
-(defn pool-stats [pool]
-  {:active-resources (.getNumActive pool)
-   ; :max-total (.getMaxTotal pool)
-   ; :max-wait-ms (.getMaxWaitMillis pool)
-   ; :created-count (.getCreatedCount pool)
-   ; :returned-count (.getReturnedCount pool)
-   :number-of-waiters (.getNumWaiters pool)
-   :idle-resources (.getNumIdle pool)})
+(defn pool-stats [redis]
+  (let [pool (.getPool redis)]
+    {:active-resources (.getNumActive pool)
+     ; :max-total (.getMaxTotal pool)
+     ; :max-wait-ms (.getMaxWaitMillis pool)
+     ; :created-count (.getCreatedCount pool)
+     ; :returned-count (.getReturnedCount pool)
+     :number-of-waiters (.getNumWaiters pool)
+     :idle-resources (.getNumIdle pool)}))
 
 ;; send arbitrary command to the server
 (defn say
   ([redis what]
    (say redis what {}))
   ([redis what {:keys [args expect parse]
-                 :or {expect t/status-code-reply
-                      parse identity}}]
+                :or {parse identity}}]
    (let [cmd (t/make-protocol-command what)
-         jargs (when args ;; TODO: deal with byte[] args
+         jargs (when args                                  ;; TODO: deal with byte[] args
                  (into-array String (if (sequential? args)
                                       args
-                                      [args])))
-         say-it #(-> (t/send-command cmd jargs %)
-                     expect)]
-         (->> say-it
-              (op redis)
-              parse))))
+                                      [args])))]
+     (-> redis
+         (t/send-command cmd jargs)
+         parse))))
 
 ;; new, not yet Jedis supported commands
 
-(defn hello [^JedisPool redis]
+(defn hello [redis]
   (let [cmd (t/make-protocol-command "HELLO")
-        say-hello #(-> (t/send-command cmd nil %)
-                       t/binary-multi-bulk-reply)
-        reply (->> say-hello
-                   (op redis)
-                   t/bytes->map)
+        reply (-> (t/send-command redis cmd nil)
+                  t/bytes->map)
         modules (mapv t/bytes->map
                       (clojure.core/get reply "modules"))] ;; TODO: later recursive bytes->type
     (assoc reply "modules" modules)))
@@ -121,12 +120,12 @@
 (defn hset
   ([h m] (c/hset h m))
   ([redis h m]
-   (op redis (c/hset h m))))
+   ((c/hset h m) redis)))
 
 (defn hmget
   ([h fs] (c/hmget h fs))
   ([^JedisPool redis h fs]
-   (into [] (op redis (c/hmget h fs)))))
+   (into [] (c/hmget redis h fs))))
 
 (defn hmset
   ([h m] (c/hmset h m))
