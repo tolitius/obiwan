@@ -54,7 +54,7 @@
                   :redis
                   :server
                   :port)]
-         (redis/create-pool {:port port}))))
+         (redis/connect {:port port}))))
 
 (defn with-redis [f]
   (let [server (start-redis-server)]
@@ -66,7 +66,7 @@
 (defn with-connection-pool [f]
   (binding [conn (make-connection-pool)]
     (f)
-    (redis/close-pool conn)))
+    (redis/disconnect conn)))
 
 (defn with-flushall [f]
     (f)

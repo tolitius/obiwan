@@ -89,17 +89,16 @@
                                        "' search option is not (yet?) implemented for " opt)))))))
 
 (defn search-index [^JedisPool redis
-                     iname
-                     query
-                     opts]
+                               iname
+                               query
+                               opts]
   (let [params (mapv opt->command opts)
         opts (->> params
                   (mapcat cmd/redisify)
                   (cons query)
                   (cons iname)
                   ; debug
-                  (into-array String))
-        send-search #(-> (t/send-command cmd/FT_SEARCH opts %)
-                         t/binary-multi-bulk-reply)]
-    (-> (oc/op redis send-search)
+                  (into-array String))]
+    (-> (t/send-command redis cmd/FT_SEARCH opts)
+        t/bytes->seq
         response->human)))

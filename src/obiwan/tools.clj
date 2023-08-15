@@ -16,7 +16,7 @@
                (filterv #(and (= mname   (.getName %))
                               (= mparams (apply str (.getParameterTypes %)))))
                first)]
-    (println "calling " m ", with params:" mparams ", and args:" args)
+    #_(println "calling " m ", with params:" mparams ", and args:" args)
     (if (seq args)
       (. m (invoke obj (into-array Object args)))
       (. m (invoke obj (into-array Object []))))))

@@ -2,6 +2,7 @@
   (:require [clojure.test :as t :refer [deftest is]]
             [obiwan.test.tools :as tt]
             [obiwan.core :as redis]
+            [obiwan.tools :as ot]
             obiwan.search.core
             obiwan.test.search))
 
@@ -12,7 +13,8 @@
   (is (redis/connected? tt/conn)))
 
 (deftest should-ping-pong
-  (is (= "PONG" (redis/say tt/conn "PING"))))
+  (is (= "PONG" (redis/say tt/conn "PING"
+                           {:parse ot/bytes->str}))))
 
 (deftest should-set-and-get
   (let [k "foo"
@@ -49,13 +51,14 @@
     (is (= 3 (redis/hset tt/conn earth details)))
     (is (= details (redis/hgetall tt/conn earth)))))
 
-(deftest should-run-commands-in-pipeline
+;; TODO: test pipeline once the pipeline support for JedisPooled & JedisCluster is added
+#_(deftest should-run-commands-in-pipeline
   (let [numbers {"1" "one" "2" "two" "3" "three"}
         letters {"a" "ey" "b" "bee" "c" "cee"}
-        commands [(redis/hset "numbers" numbers)
-                  (redis/hset "letters" letters)
-                  (redis/hgetall "numbers")
-                  (redis/hgetall "letters")]]
+        commands [#(.hset % "numbers" numbers)
+                  #(.hset % "letters" letters)
+                  #(.hgetAll % "numbers")
+                  #(.hgetAll % "letters")]]
     (is (= [(count numbers)
             (count letters)
             numbers

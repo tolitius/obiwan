@@ -140,17 +140,16 @@
 ;;       plus can be positioned anywhere in a query addiing a different meaning that depends on a position
 ;;       the actual query has to be a vector of maps vs. a map
 (defn aggregate-index [^JedisPool redis
-                       iname
-                       query
-                       opts]
+                                  iname
+                                  query
+                                  opts]
   (let [params (mapv opt->command opts)
         opts (->> params
                   (mapcat cmd/redisify)
                   (cons query)
                   (cons iname)
                   ; debug
-                  (into-array String))
-        send-search #(-> (t/send-command cmd/FT_AGGREGATE opts %)
-                         t/binary-multi-bulk-reply)]
-    (-> (oc/op redis send-search)
+                  (into-array String))]
+    (-> (t/send-command redis cmd/FT_AGGREGATE opts)
+        t/bytes->seq
         response->human)))

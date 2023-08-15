@@ -30,34 +30,26 @@
 
 ;;
 
-(defn ft-list [conn]
-  (let [ask-for-list #(-> (t/send-command FT__LIST nil %)
-                          t/binary-multi-bulk-reply)]
-    (->> ask-for-list
-         (oc/op conn)
-         t/bytes->seq)))
+(defn ft-list [redis]
+  (-> (t/send-command redis FT__LIST nil)
+      t/bytes->seq))
 
-(defn ft-drop-index [conn index-name dd?]
+(defn ft-drop-index [redis index-name dd?]
   (let [args (if dd?
                (into-array String [index-name "DD"])
-               (into-array String [index-name]))
-        drop-it #(-> (t/send-command FT_DROPINDEX args %)
-                     t/status-code-reply)]
-    (->> drop-it
-         (oc/op conn))))
+               (into-array String [index-name]))]
+    (-> (t/send-command redis FT_DROPINDEX args)
+        t/bytes->str)))
 
-(defn ft-sugadd [conn k string score {:keys [incr? payload]}]
+(defn ft-sugadd [redis k string score {:keys [incr? payload]}]
   (let [;;TODO: add arg validation
         args (->> (cond-> [k string (str score)]
                     incr?   (conj "INCR")
                     payload (conj "PAYLOAD" payload))
-                  (into-array String))
-        add-it #(-> (t/send-command FT_SUGADD args %)
-                    t/integer-reply)]
-    (->> add-it
-         (oc/op conn))))
+                  (into-array String))]
+    (t/send-command redis FT_SUGADD args)))
 
-(defn ft-sugget [conn k prefix {:keys [fuzzy? with-scores? with-payloads? max]}]
+(defn ft-sugget [redis k prefix {:keys [fuzzy? with-scores? with-payloads? max]}]
   (let [;;TODO: add arg validation
         args (->> (cond-> [k prefix]
                     fuzzy?          (conj "FUZZY")
@@ -65,10 +57,8 @@
                     with-payloads?  (conj "WITHPAYLOADS")
                     max             (conj "MAX" (str max)))
                   (into-array String))
-        get-it #(-> (t/send-command FT_SUGGET args %)
-                    t/multi-bulk-reply)
-        sugs (->> get-it
-                  (oc/op conn))]
+        sugs (-> (t/send-command redis FT_SUGGET args)
+                 t/bytes->seq)]
     (cond
       (and with-payloads?
            with-scores?)  (->> sugs (partition 3) (mapv #(zipmap [:suggestion :score :payload] %)))
@@ -76,18 +66,12 @@
       with-scores?        (->> sugs (partition 2) (mapv #(zipmap [:suggestion :score] %)))
       :else               (->> sugs (mapv #(zipmap [:suggestion] [%]))))))
 
-(defn ft-sugdel [conn k string]
+(defn ft-sugdel [redis k string]
   (let [;;TODO: add arg validation
-        args (into-array String [k string])
-        add-it #(-> (t/send-command FT_SUGDEL args %)
-                    t/integer-reply)]
-    (->> add-it
-         (oc/op conn))))
+        args (into-array String [k string])]
+    (t/send-command redis FT_SUGDEL args)))
 
-(defn ft-suglen [conn k]
+(defn ft-suglen [redis k]
   (let [;;TODO: add arg validation
-        args (into-array String [k])
-        add-it #(-> (t/send-command FT_SUGLEN args %)
-                    t/integer-reply)]
-    (->> add-it
-         (oc/op conn))))
+        args (into-array String [k])]
+    (t/send-command redis FT_SUGLEN args)))
