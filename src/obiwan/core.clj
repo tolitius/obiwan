@@ -7,6 +7,7 @@
                                 HostAndPort
                                 UnifiedJedis
                                 JedisCluster
+                                DefaultJedisClientConfig
                                 JedisPooled
                                 JedisPoolConfig]
            [redis.clients.jedis.util Pool]
@@ -16,50 +17,66 @@
            [java.time Duration]
            [org.apache.commons.pool2.impl GenericObjectPool GenericObjectPoolConfig]))
 
+(defn make-client-config [{:keys [username
+                                  password
+                                  database-index
+                                  connection-timeout
+                                  socket-timeout
+                                  ssl?
+                                  client-name]
+                           :or {connection-timeout Protocol/DEFAULT_TIMEOUT
+                                socket-timeout Protocol/DEFAULT_TIMEOUT
+                                database-index Protocol/DEFAULT_DATABASE
+                                ssl? false
+                                client-name "kenobi"}}]
+  (-> (DefaultJedisClientConfig/builder)
+      (.user username)
+      (.password password)
+      (.database database-index)
+      (.connectionTimeoutMillis connection-timeout)
+      (.socketTimeoutMillis socket-timeout)
+      (.ssl ssl?)
+      (.clientName client-name)
+      .build))
+
 (defn connect
   ([]
    (connect {}))
-  ([{:keys [host port timeout
+  ([{:keys [host port
             to
+            connection-timeout socket-timeout
+            max-attempts
             username password
-            database-index ssl?
-            size
-            max-wait max-idle]
+            database-index
+            ssl?
+            client-name
+            pool-size pool-max-wait pool-max-idle]
      :or {host "127.0.0.1"
           port 6379
           to :default
-          timeout Protocol/DEFAULT_TIMEOUT
-          database-index Protocol/DEFAULT_DATABASE
-          ssl? false
-          size 42
-          max-wait 30000
-          max-idle 8}
+          max-attempts JedisCluster/DEFAULT_MAX_ATTEMPTS
+          pool-size 42
+          pool-max-wait 30000
+          pool-max-idle 8}
      :as opts}]
-   (let [conf (doto (JedisPoolConfig.)
-                (.setMaxTotal size)
-                (.setMaxIdle max-idle)
-                (.setMaxWaitMillis max-wait))]
+   (let [pool-config (doto (JedisPoolConfig.)
+                       (.setMaxTotal pool-size)
+                       (.setMaxIdle pool-max-idle)
+                       (.setMaxWaitMillis pool-max-wait))
+         client-config (make-client-config opts)
+         host-and-port (HostAndPort. host port)]
      (case to
-       :default (do (println (str "connecting to Redis " host ":" port ", timeout: " timeout ", config: "
-                                  (dissoc opts :username :password)))
-                    (JedisPooled. conf
-                                  ^String host
-                                  ^int port
-                                  ^int timeout
-                                  ^String username
-                                  ^String password
-                                  ^int database-index
-                                  ^Boolean ssl?))
-       :cluster (do (println (str "connecting to Redis cluster " host ":" port ", timeout: " timeout ", config: "
-                                  (dissoc opts :username :password)))
-                    (JedisCluster. conf
-                                   ^String host
-                                   ^int port
-                                   ^int timeout
-                                   ^String username
-                                   ^String password
-                                   ^int database-index
-                                   ^Boolean ssl?))
+       :default (do (println (str "connecting to Redis " host ":" port ", config: "
+                                  (dissoc opts :username :password :host :port)))
+                    (JedisPooled. host-and-port
+                                  client-config
+                                  pool-config))
+       :cluster (do (println (str "connecting to Redis cluster " host ":" port ", config: "
+                                  (dissoc opts :username :password :host :port)))
+                    (JedisCluster. #{host-and-port}
+                                   client-config
+                                   max-attempts
+                                   pool-config))
        (throw (RuntimeException.
                 (str "\"" to "\" is an unknown source to connect to. supported are \":default\" and \":cluster\"")))))))
 
