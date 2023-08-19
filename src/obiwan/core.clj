@@ -7,6 +7,7 @@
                                 HostAndPort
                                 UnifiedJedis
                                 JedisCluster
+                                JedisSentineled
                                 DefaultJedisClientConfig
                                 JedisPooled
                                 JedisPoolConfig]
@@ -39,6 +40,26 @@
       (.clientName client-name)
       .build))
 
+(defn make-sentineled [pool-config
+                       master-client-config
+                       sentinels
+                       {:keys [master-name
+                               sentinel-client-config]
+                        :as opts}]
+
+  (when-not (seq master-name)
+    (throw (RuntimeException. "can't create a sentineled redis client without a master name. please provide one via a :master-name param")))
+
+  (let [sentinel-config (or sentinel-client-config
+                            ;; make a default sentinel client config is not passed in
+                            (make-client-config (assoc opts
+                                                       :client-name "sentinel-kanobi")))]
+    (JedisSentineled. master-name
+                      master-client-config
+                      pool-config
+                      sentinels
+                      sentinel-config)))
+
 (defn connect
   ([]
    (connect {}))
@@ -50,6 +71,8 @@
             database-index
             ssl?
             client-name
+            master-name
+            sentinel-client-config                 ;; if not provided a default config will be created if sentinel is used
             pool-size pool-max-wait pool-max-idle]
      :or {host "127.0.0.1"
           port 6379
@@ -77,6 +100,12 @@
                                    client-config
                                    max-attempts
                                    pool-config))
+       :sentinel (do (println (str "connecting to Redis sentineled " host ":" port ", config: "
+                                   (dissoc opts :username :password :host :port)))
+                     (make-sentineled pool-config
+                                      client-config
+                                      #{host-and-port}
+                                      opts))
        (throw (RuntimeException.
                 (str "\"" to "\" is an unknown source to connect to. supported are \":default\" and \":cluster\"")))))))
 
