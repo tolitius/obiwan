@@ -28,15 +28,19 @@ some renames, some addtions, some regroupping:
 ```clojure
 {:nodes                                  ;; [{:host "1.1.1.1" :port 6379} {:host "2.2.2.2" :port 6380}]
  :to                                     ;; :cluster, :sentinel
- :connection-timeout socket-timeout
+ :connection-timeout
+ :socket-timeout
  :max-attempts
- :username password
+ :username
+ :password
  :database-index
  :ssl?
  :client-name
  :master-name
  :sentinel-client-config                 ;; if not provided a default config will be created if sentinel is used
- :pool-size pool-max-wait pool-max-idle}
+ :pool-size
+ :pool-max-wait
+ :pool-max-idle}
 ```
 
 ### pipelines
