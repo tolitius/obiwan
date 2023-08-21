@@ -56,7 +56,7 @@ Let's try it out:
 ;;  :idle-resources 0}
 ```
 
-in order to connect to a different host, port, with a different number of threads, password, etc. `create-pool` takes a config:
+in order to connect to a different host, port, with a different number of threads, password, etc. `connect` takes a config:
 
 ```clojure
 => (def conn (redis/connect {:nodes [{:host "dotkam.com"
@@ -97,9 +97,9 @@ closing the pool:
 
 in order to connect to [Redis Sentinel](https://redis.io/docs/management/sentinel/) a few things need to be provided to obiwan:
 
-* "`:to`" key in params should say "`:sentinel`
-* "`:master-name`" since Redis does "[SENTINEL get-master-addr-by-name mymaster](https://redis.io/docs/management/sentinel/#obtaining-the-address-of-the-current-master)" from a client to lookup a master node
-* "`:nodes`" in a form of a collection of "`{:host :port}`" maps
+* `:to` key in params should say `:sentinel`
+* `:master-name` since Redis client does "[SENTINEL get-master-addr-by-name mymaster](https://redis.io/docs/management/sentinel/#obtaining-the-address-of-the-current-master)" to lookup a master node
+* `:nodes` in a form of a collection of `{:host :port}` maps
 
 example:
 
@@ -114,8 +114,8 @@ example:
 
 in order to connect to a [Redis Cluster](https://redis.io/docs/management/scaling/) a few things need to be provided to obiwan:
 
-* "`:to`" key in params should say "`:cluster`
-* "`:nodes`" in a form of a collection of "`{:host :port}`" maps
+* `:to` key in params should say `:cluster`
+* `:nodes` in a form of a collection of `{:host :port}` maps
 
 example:
 
