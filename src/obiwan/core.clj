@@ -8,7 +8,9 @@
                                 UnifiedJedis
                                 JedisCluster
                                 JedisSentineled
+                                JedisSentinelPool
                                 DefaultJedisClientConfig
+                                JedisPool
                                 JedisPooled
                                 JedisPoolConfig]
            [redis.clients.jedis.util Pool]
@@ -17,6 +19,26 @@
            [redis.clients.jedis.exceptions JedisConnectionException]
            [java.time Duration]
            [org.apache.commons.pool2.impl GenericObjectPool GenericObjectPoolConfig]))
+
+(defn connected-as [client]
+  (condp instance? client
+    JedisPool         :jedis-pool
+    JedisPooled       :jedis-pooled
+    JedisSentineled   :jedis-sentineled
+    JedisSentinelPool :jedis-sentinel-pool
+    JedisCluster      :jedis-cluster
+    :unknown-client-type))
+
+(defn make-host-and-ports
+  "convert [{:host \"1.1.1.1\" :port 6379}
+            {:host \"2.2.2.2\" :port 6380}
+            ..]
+   to a set of HostAndPort instances"
+  [nodes]
+  (->> nodes
+       (map (fn [{:keys [host port]}]
+              (HostAndPort. host port)))
+       (into #{})))
 
 (defn make-client-config [{:keys [username
                                   password
@@ -63,8 +85,8 @@
 (defn connect
   ([]
    (connect {}))
-  ([{:keys [host port
-            to
+  ([{:keys [nodes                                  ;; [{:host "1.1.1.1" :port 6379} {:host "2.2.2.2" :port 6380}]
+            to                                     ;; :cluster, :sentinel
             connection-timeout socket-timeout
             max-attempts
             username password
@@ -74,46 +96,48 @@
             master-name
             sentinel-client-config                 ;; if not provided a default config will be created if sentinel is used
             pool-size pool-max-wait pool-max-idle]
-     :or {host "127.0.0.1"
-          port 6379
+     :or {nodes [{:host "127.0.0.1" :port 6379}]
           to :default
           max-attempts JedisCluster/DEFAULT_MAX_ATTEMPTS
           pool-size 42
           pool-max-wait 30000
           pool-max-idle 8}
      :as opts}]
-   (let [pool-config (doto (JedisPoolConfig.)
-                       (.setMaxTotal pool-size)
-                       (.setMaxIdle pool-max-idle)
-                       (.setMaxWaitMillis pool-max-wait))
-         client-config (make-client-config opts)
-         host-and-port (HostAndPort. host port)]
+   (let [pool-config      (doto (JedisPoolConfig.)
+                            (.setMaxTotal pool-size)
+                            (.setMaxIdle pool-max-idle)
+                            (.setMaxWaitMillis pool-max-wait))
+         client-config    (make-client-config opts)
+         hosts-and-ports  (make-host-and-ports nodes)]
      (case to
-       :default (do (println (str "connecting to Redis " host ":" port ", config: "
-                                  (dissoc opts :username :password :host :port)))
-                    (JedisPooled. host-and-port
+       :default (do (println (str "connecting to Redis " nodes ", config: "
+                                  (dissoc opts :username :password :to :nodes)))
+                    (JedisPooled. (first hosts-and-ports)
                                   client-config
                                   pool-config))
-       :cluster (do (println (str "connecting to Redis cluster " host ":" port ", config: "
-                                  (dissoc opts :username :password :host :port)))
-                    (JedisCluster. #{host-and-port}
+       :cluster (do (println (str "connecting to Redis cluster " nodes ", config: "
+                                  (dissoc opts :username :password :to :nodes)))
+                    (JedisCluster. hosts-and-ports
                                    client-config
                                    max-attempts
                                    pool-config))
-       :sentinel (do (println (str "connecting to Redis sentineled " host ":" port ", config: "
-                                   (dissoc opts :username :password :host :port)))
+       :sentinel (do (println (str "connecting to Redis sentineled " nodes ", config: "
+                                   (dissoc opts :username :password :to :nodes)))
                      (make-sentineled pool-config
                                       client-config
-                                      #{host-and-port}
+                                      hosts-and-ports
                                       opts))
        (throw (RuntimeException.
                 (str "\"" to "\" is an unknown source to connect to. supported are \":default\" and \":cluster\"")))))))
 
 (defn disconnect [redis]
   (println "disconnecting from Redis")
-  (-> redis
-      .getPool
-      .destroy)
+  (case (connected-as redis)
+    :jedis-pooled      (-> redis
+                           .getPool
+                           .destroy)
+    :jedis-sentineled  :tbd
+    :jedis-cluster     :tbd)
   :disconnected-from-redis)
 
 (declare say)
@@ -128,14 +152,18 @@
 
 ;; TODO: waiting on 4.x Jedis branch to open up the BaseGenericObjectPool getters
 (defn pool-stats [redis]
-  (let [pool (.getPool redis)]
-    {:active-resources (.getNumActive pool)
-     ; :max-total (.getMaxTotal pool)
-     ; :max-wait-ms (.getMaxWaitMillis pool)
-     ; :created-count (.getCreatedCount pool)
-     ; :returned-count (.getReturnedCount pool)
-     :number-of-waiters (.getNumWaiters pool)
-     :idle-resources (.getNumIdle pool)}))
+  (if (= (connected-as redis)
+         :jedis-pooled)
+    (let [pool (.getPool redis)]
+      {:active-resources (.getNumActive pool)
+       ; :max-total (.getMaxTotal pool)
+       ; :max-wait-ms (.getMaxWaitMillis pool)
+       ; :created-count (.getCreatedCount pool)
+       ; :returned-count (.getReturnedCount pool)
+       :number-of-waiters (.getNumWaiters pool)
+       :idle-resources (.getNumIdle pool)})
+    {:pool-stats (str "not supported for "
+                      (connected-as redis))}))
 
 ;; send arbitrary command to the server
 (defn say

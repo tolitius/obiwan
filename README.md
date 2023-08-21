@@ -7,7 +7,9 @@
 
 redis/search clojure client based on [jedis](https://github.com/redis/jedis).
 
-- [connect to a cluster](#connect-to-a-cluster)
+- [connect](#connect)
+  - [sentinel](#sentinel)
+  - [cluster](#cluster)
 - [work with data structures](#work-with-data-structures)
   - [hash](#hash)
   - [sorted set](#sorted-set)
@@ -34,9 +36,9 @@ redis/search clojure client based on [jedis](https://github.com/redis/jedis).
   - [run/add tests](#runadd-tests)
 - [license](#license)
 
-# connect to a cluster
+# connect
 
-Obi Wan relies on [JedisPool](https://www.javadoc.io/doc/redis.clients/jedis/latest/redis/clients/jedis/JedisPool.html) to connect to a cluster
+by default Obi Wan relies on [JedisPooled](https://javadoc.io/static/redis.clients/jedis/5.0.0-beta2/redis/clients/jedis/JedisPooled.html) to connect to a cluster
 which means once the pool is created you'd have a collection of connections to work with.
 
 Let's try it out:
@@ -45,7 +47,7 @@ Let's try it out:
 => (require '[obiwan.core :as redis])
 
 ;; by default would connect to a local redis 127.0.0.1:6379 with a 42 thread connection pool
-=> (def conn (redis/create-pool))
+=> (def conn (redis/connect))
 #'user/conn
 
 => (redis/pool-stats conn)
@@ -57,36 +59,70 @@ Let's try it out:
 in order to connect to a different host, port, with a different number of threads, password, etc. `create-pool` takes a config:
 
 ```clojure
-=> (def conn (redis/create-pool {:host "dotkam.com"
-                                 :port 4242
-                                 :timeout 42000
-                                 :size 4
-                                 :max-wait 15000
-                                 :timeout 30000
-                                 :ssl? true
-                                 :database-index 42
-                                 :username "mando"
-                                 :password "|th1s is the w@y|"}))
+=> (def conn (redis/connect {:nodes [{:host "dotkam.com"
+                                      :port 4242}]
+                             :connection-timeout 42000
+                             :pool-size 4
+                             :ssl? true
+                             :database-index 42
+                             :username "mando"
+                             :password "|th1s is the w@y|"}))
 ;; #'user/conn
 ```
 
 by default the config map is:
 
 ```clojure
-{:host "127.0.0.1"
- :port 6379
- :timeout Protocol/DEFAULT_TIMEOUT          ;; 2 seconds as per Jedis' protocol
- :database-index Protocol/DEFAULT_DATABASE  ;; 0 as per Jedis' protocol
- :ssl? false
- :size 42
- :max-wait 30000}
+;; {:nodes [{:host "127.0.0.1" :port 6379}]
+;;  :to :default                                      ;; also supports ":cluster" & ":sentinel"
+;;  :max-attempts JedisCluster/DEFAULT_MAX_ATTEMPTS
+;;  :connection-timeout Protocol/DEFAULT_TIMEOUT      ;; 2 seconds as per Jedis' protocol
+;;  :socket-timeout Protocol/DEFAULT_TIMEOUT          ;; 2 seconds as per Jedis' protocol
+;;  :database-index Protocol/DEFAULT_DATABASE         ;; 0 as per Jedis' protocol
+;;  :ssl? false
+;;  :client-name "kenobi"
+;;  :pool-size 42
+;;  :pool-max-wait 30000
+;;  :pool-max-idle 8}
 ```
 
 closing the pool:
 
 ```clojure
-=> (redis/close-pool conn)
-;; :pool-closed
+=> (redis/disconnect conn)
+;; :disconnected-from-redis
+```
+
+### sentinel
+
+in order to connect to [Redis Sentinel](https://redis.io/docs/management/sentinel/) a few things need to be provided to obiwan:
+
+* "`:to`" key in params should say "`:sentinel`
+* "`:master-name`" since Redis does "[SENTINEL get-master-addr-by-name mymaster](https://redis.io/docs/management/sentinel/#obtaining-the-address-of-the-current-master)" from a client to lookup a master node
+* "`:nodes`" in a form of a collection of "`{:host :port}`" maps
+
+example:
+
+```clojure
+(def conn (redis/connect {:to :sentinel
+                          :master-name "yoda"
+                          :nodes [{:host "1.1.1.1" :port 6379}
+                                  {:host "2.2.2.2" :port 6380}]}))
+```
+
+### cluster
+
+in order to connect to a [Redis Cluster](https://redis.io/docs/management/scaling/) a few things need to be provided to obiwan:
+
+* "`:to`" key in params should say "`:cluster`
+* "`:nodes`" in a form of a collection of "`{:host :port}`" maps
+
+example:
+
+```clojure
+(def conn (redis/connect {:to :cluster
+                          :nodes [{:host "1.1.1.1" :port 6379}
+                                  {:host "2.2.2.2" :port 6380}]}))
 ```
 
 # work with data structures
@@ -192,6 +228,8 @@ looking inside the source (redis server):
 take a look at [tests](test/obiwan/test.clj) to see how other commands data structures are used
 
 # run commands in a pipeline
+
+> _(!) pipeline works in `0.1.x`, but not yet in `0.2.x`_
 
 redis supports [pipelining](https://redis.io/topics/pipelining) to speed up client queries.
 

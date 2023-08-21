@@ -54,7 +54,8 @@
                   :redis
                   :server
                   :port)]
-         (redis/connect {:port port}))))
+         (redis/connect {:nodes [{:host "localhost"
+                                  :port port}]}))))
 
 (defn with-redis [f]
   (let [server (start-redis-server)]

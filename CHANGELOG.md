@@ -1,3 +1,49 @@
+# 0.2.0
+
+* full refactor to support [UnifiedJedis](https://javadoc.io/static/redis.clients/jedis/5.0.0-beta2/redis/clients/jedis/UnifiedJedis.html)
+
+which is a stepping stone to JedisCluster, JedisPooled, JedisSentineled, JedisSharding
+
+a few braking changes (hence the minor version bump):
+
+* connecting / disconnecting
+
+pre "`0.2.x`":
+```clojure
+=> (def conn (redis/create-pool))
+=> (redis/close-pool conn)
+```
+
+`0.2.x` and later:
+
+```clojure
+=> (def conn (redis/connect))
+=> (redis/disconnect conn)
+```
+
+* configuration params
+
+some renames, some addtions, some regroupping:
+
+```clojure
+{:nodes                                  ;; [{:host "1.1.1.1" :port 6379} {:host "2.2.2.2" :port 6380}]
+ :to                                     ;; :cluster, :sentinel
+ :connection-timeout socket-timeout
+ :max-attempts
+ :username password
+ :database-index
+ :ssl?
+ :client-name
+ :master-name
+ :sentinel-client-config                 ;; if not provided a default config will be created if sentinel is used
+ :pool-size pool-max-wait pool-max-idle}
+```
+
+* pipelines
+
+they are currently on Jedis and will have to be ported to UnifiedJedis
+in this version they won't work
+
 # 0.1.4809
 
 * add params to `set` ([what params](https://redis.io/commands/set/)?)
