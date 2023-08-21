@@ -126,7 +126,6 @@
                    (cmd/redisify-params fields)]
                   t/xs->str
                   t/tokenize
-                  (into-array String))
-        send-create #(-> (t/send-command cmd/FT_CREATE opts %)
-                         t/status-code-reply)]
-    (oc/op redis send-create)))
+                  (into-array String))]
+    (-> (t/send-command redis cmd/FT_CREATE opts)
+        t/bytes->str)))

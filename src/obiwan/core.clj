@@ -2,104 +2,190 @@
   (:refer-clojure :exclude [get set type keys])
   (:require [obiwan.commands :as c]
             [obiwan.tools :as t])
-  (:import [redis.clients.jedis Jedis
-                                Protocol
+  (:import [redis.clients.jedis Protocol
+                                Pipeline
+                                HostAndPort
+                                UnifiedJedis
+                                JedisCluster
+                                JedisSentineled
+                                JedisSentinelPool
+                                DefaultJedisClientConfig
                                 JedisPool
+                                JedisPooled
                                 JedisPoolConfig]
+           [redis.clients.jedis.util Pool]
            [redis.clients.jedis.params ScanParams]
            [redis.clients.jedis.resps ScanResult]
            [redis.clients.jedis.exceptions JedisConnectionException]
            [java.time Duration]
            [org.apache.commons.pool2.impl GenericObjectPool GenericObjectPoolConfig]))
 
-(defn new-conn [^JedisPool pool]
-  (.getResource pool))
+(defn connected-as [client]
+  (condp instance? client
+    JedisPool         :jedis-pool
+    JedisPooled       :jedis-pooled
+    JedisSentineled   :jedis-sentineled
+    JedisSentinelPool :jedis-sentinel-pool
+    JedisCluster      :jedis-cluster
+    :unknown-client-type))
 
-(defn op [pool f]
-  (with-open [^Jedis r (new-conn pool)]
-    (f r)))
+(defn make-host-and-ports
+  "convert [{:host \"1.1.1.1\" :port 6379}
+            {:host \"2.2.2.2\" :port 6380}
+            ..]
+   to a set of HostAndPort instances"
+  [nodes]
+  (->> nodes
+       (map (fn [{:keys [host port]}]
+              (HostAndPort. host port)))
+       (into #{})))
 
-(defn create-pool
+(defn make-client-config [{:keys [username
+                                  password
+                                  database-index
+                                  connection-timeout
+                                  socket-timeout
+                                  ssl?
+                                  client-name]
+                           :or {connection-timeout Protocol/DEFAULT_TIMEOUT
+                                socket-timeout Protocol/DEFAULT_TIMEOUT
+                                database-index Protocol/DEFAULT_DATABASE
+                                ssl? false
+                                client-name "kenobi"}}]
+  (-> (DefaultJedisClientConfig/builder)
+      (.user username)
+      (.password password)
+      (.database database-index)
+      (.connectionTimeoutMillis connection-timeout)
+      (.socketTimeoutMillis socket-timeout)
+      (.ssl ssl?)
+      (.clientName client-name)
+      .build))
+
+(defn make-sentineled [pool-config
+                       master-client-config
+                       sentinels
+                       {:keys [master-name
+                               sentinel-client-config]
+                        :as opts}]
+
+  (when-not (seq master-name)
+    (throw (RuntimeException. "can't create a sentineled redis client without a master name. please provide one via a :master-name param")))
+
+  (let [sentinel-config (or sentinel-client-config
+                            ;; make a default sentinel client config is not passed in
+                            (make-client-config (assoc opts
+                                                       :client-name "sentinel-kanobi")))]
+    (JedisSentineled. master-name
+                      master-client-config
+                      pool-config
+                      sentinels
+                      sentinel-config)))
+
+(defn connect
   ([]
-   (create-pool {}))
-  ([{:keys [host port timeout
+   (connect {}))
+  ([{:keys [nodes                                  ;; [{:host "1.1.1.1" :port 6379} {:host "2.2.2.2" :port 6380}]
+            to                                     ;; :cluster, :sentinel
+            connection-timeout socket-timeout
+            max-attempts
             username password
-            database-index ssl?
-            size
-            max-wait max-idle]
-     :or {host "127.0.0.1"
-          port 6379
-          timeout Protocol/DEFAULT_TIMEOUT
-          database-index Protocol/DEFAULT_DATABASE
-          ssl? false
-          size 42
-          max-wait 30000
-          max-idle 8}
+            database-index
+            ssl?
+            client-name
+            master-name
+            sentinel-client-config                 ;; if not provided a default config will be created if sentinel is used
+            pool-size pool-max-wait pool-max-idle]
+     :or {nodes [{:host "127.0.0.1" :port 6379}]
+          to :default
+          max-attempts JedisCluster/DEFAULT_MAX_ATTEMPTS
+          pool-size 42
+          pool-max-wait 30000
+          pool-max-idle 8}
      :as opts}]
-   (let [conf (doto (JedisPoolConfig.)
-                (.setMaxTotal size)
-                (.setMaxIdle max-idle)
-                (.setMaxWaitMillis max-wait))]
-     (println (str "connecting to Redis " host ":" port ", timeout: " timeout ", config: "
-                   (dissoc opts :username :password)))
-     (JedisPool. conf
-                 ^String host
-                 ^int port
-                 ^int timeout
-                 ^String username
-                 ^String password
-                 ^int database-index
-                 ^Boolean ssl?))))
+   (let [pool-config      (doto (JedisPoolConfig.)
+                            (.setMaxTotal pool-size)
+                            (.setMaxIdle pool-max-idle)
+                            (.setMaxWaitMillis pool-max-wait))
+         client-config    (make-client-config opts)
+         hosts-and-ports  (make-host-and-ports nodes)]
+     (case to
+       :default (do (println (str "connecting to Redis " nodes ", config: "
+                                  (dissoc opts :username :password :to :nodes)))
+                    (JedisPooled. (first hosts-and-ports)
+                                  client-config
+                                  pool-config))
+       :cluster (do (println (str "connecting to Redis cluster " nodes ", config: "
+                                  (dissoc opts :username :password :to :nodes)))
+                    (JedisCluster. hosts-and-ports
+                                   client-config
+                                   max-attempts
+                                   pool-config))
+       :sentinel (do (println (str "connecting to Redis sentineled " nodes ", config: "
+                                   (dissoc opts :username :password :to :nodes)))
+                     (make-sentineled pool-config
+                                      client-config
+                                      hosts-and-ports
+                                      opts))
+       (throw (RuntimeException.
+                (str "\"" to "\" is an unknown source to connect to. supported are \":default\" and \":cluster\"")))))))
 
-(defn close-pool [pool]
+(defn disconnect [redis]
   (println "disconnecting from Redis")
-  (.destroy pool)
-  :pool-closed)
+  (case (connected-as redis)
+    :jedis-pooled      (-> redis
+                           .getPool
+                           .destroy)
+    :jedis-sentineled  :tbd
+    :jedis-cluster     :tbd)
+  :disconnected-from-redis)
 
-(defn connected? [pool]
+(declare say)
+
+(defn connected? [redis]
   (try
-    (op pool (fn [_] true))
+    (= "PONG"
+       (say redis "PING" {:parse t/bytes->str}))
     (catch JedisConnectionException ex
       (println ex)
       false)))
 
 ;; TODO: waiting on 4.x Jedis branch to open up the BaseGenericObjectPool getters
-(defn pool-stats [pool]
-  {:active-resources (.getNumActive pool)
-   ; :max-total (.getMaxTotal pool)
-   ; :max-wait-ms (.getMaxWaitMillis pool)
-   ; :created-count (.getCreatedCount pool)
-   ; :returned-count (.getReturnedCount pool)
-   :number-of-waiters (.getNumWaiters pool)
-   :idle-resources (.getNumIdle pool)})
+(defn pool-stats [redis]
+  (if (= (connected-as redis)
+         :jedis-pooled)
+    (let [pool (.getPool redis)]
+      {:active-resources (.getNumActive pool)
+       ; :max-total (.getMaxTotal pool)
+       ; :max-wait-ms (.getMaxWaitMillis pool)
+       ; :created-count (.getCreatedCount pool)
+       ; :returned-count (.getReturnedCount pool)
+       :number-of-waiters (.getNumWaiters pool)
+       :idle-resources (.getNumIdle pool)})
+    {:pool-stats (str "not supported for "
+                      (connected-as redis))}))
 
 ;; send arbitrary command to the server
 (defn say
   ([redis what]
    (say redis what {}))
   ([redis what {:keys [args expect parse]
-                 :or {expect t/status-code-reply
-                      parse identity}}]
+                :or {parse identity}}]
    (let [cmd (t/make-protocol-command what)
-         jargs (when args ;; TODO: deal with byte[] args
+         jargs (when args                                  ;; TODO: deal with byte[] args
                  (into-array String (if (sequential? args)
                                       args
-                                      [args])))
-         say-it #(-> (t/send-command cmd jargs %)
-                     expect)]
-         (->> say-it
-              (op redis)
-              parse))))
+                                      [args])))]
+     (-> redis
+         (t/send-command cmd jargs)
+         parse))))
 
 ;; new, not yet Jedis supported commands
 
-(defn hello [^JedisPool redis]
+(defn hello [redis]
   (let [cmd (t/make-protocol-command "HELLO")
-        say-hello #(-> (t/send-command cmd nil %)
-                       t/binary-multi-bulk-reply)
-        reply (->> say-hello
-                   (op redis)
-                   t/bytes->map)
+        reply (-> (t/send-command redis cmd nil)
+                  t/bytes->map)
         modules (mapv t/bytes->map
                       (clojure.core/get reply "modules"))] ;; TODO: later recursive bytes->type
     (assoc reply "modules" modules)))
@@ -114,156 +200,118 @@
 (defn ^{:doc {:obiwan-doc
               "takes in a jedis connection pool, a hash name and a field name if present, returns a field name value"}}
   hget
-  ([h f] (c/hget h f))
-  ([^JedisPool redis h f]
-   (op redis (c/hget h f))))
+  ([^UnifiedJedis redis h f]
+   (.hget redis h f)))
 
-(defn hset
-  ([h m] (c/hset h m))
-  ([redis h m]
-   (op redis (c/hset h m))))
+(defn hset [^UnifiedJedis redis h m]
+   (.hset redis h m))
 
-(defn hmget
-  ([h fs] (c/hmget h fs))
-  ([^JedisPool redis h fs]
-   (into [] (op redis (c/hmget h fs)))))
+(defn hmget [^UnifiedJedis redis h fs]
+  (->> (.hmget redis
+               h
+               (into-array String fs))
+       (into [])))
 
-(defn hmset
-  ([h m] (c/hmset h m))
-  ([redis h m]
-   (op redis (c/hmset h m))))
+(defn hgetall [^UnifiedJedis redis h]
+  (->> (.hgetAll redis h)
+       (into {})))
 
-(defn hgetall
-  ([h] (c/hgetall h))
-  ([^JedisPool redis h]
-   (into {} (op redis (c/hgetall h)))))
-
-(defn hdel
-  ([h vs] (c/hdel h vs))
-  ([redis h vs]
-   (op redis (c/hdel h vs))))
+(defn hdel [^UnifiedJedis redis h vs]
+  (.hdel redis h (into-array String vs)))
 
 ;; sorted set
 
-(defn zadd
-  ([k m] (c/zadd k m))
-  ([redis k m]
-   (op redis #(.zadd % k m))))
+(defn zadd [^UnifiedJedis redis k m]
+  (.zadd redis k m))
 
-(defn zrange
-  ([k zmin zmax] (c/zrange k zmin zmax))
-  ([redis k zmin zmax]
-   (op redis #(.zrange % k zmin zmax))))
+(defn zrange [^UnifiedJedis redis k zmin zmax]
+  (.zrange redis k zmin zmax))
 
 ;; set
 
-(defn smembers
-  ([s] (c/smembers s))
-  ([redis s]
-   (op redis (c/smembers s))))
+(defn smembers [^UnifiedJedis redis s]
+  (.smembers redis s))
 
-(defn scard
-  ([s] (c/scard s))
-  ([redis s]
-   (op redis (c/scard s))))
+(defn scard [^UnifiedJedis redis s]
+  (.scard redis s))
 
-(defn sismember
-  ([s v] (c/smembers s v))
-  ([redis s v]
-   (op redis (c/smembers s v))))
+(defn sismember [^UnifiedJedis redis s v]
+  (.sismember redis s v))
 
-(defn sadd
-  ([s vs] (c/sadd s vs))
-  ([redis s vs]
-   (op redis (c/sadd s vs))))
+(defn sadd [^UnifiedJedis redis s vs]
+  (.sadd redis s (into-array
+                   String vs)))
 
-(defn srem
-  ([s vs] (c/srem s vs))
-  ([redis s vs]
-   (op redis (c/srem s vs))))
+(defn srem [^UnifiedJedis redis s vs]
+  (.srem redis s (into-array
+                   String vs)))
 
 ;; basic operations
 
 (defn set
-  ([k v] (c/set k v))
-  ([redis k v]
-   (op redis (c/set k v)))
-  ([redis k v params]
-   (op redis (c/set k v params))))
+  ([^UnifiedJedis redis k v]
+   (.set redis k v))
+  ([^UnifiedJedis redis k v params]
+   (let [ps (c/->set-params params)]
+     (.set redis k v ps))))
 
-(defn get
-  ([k] (c/get k))
-  ([redis k]
-   (op redis (c/get k))))
+(defn get [^UnifiedJedis redis k]
+  (.get redis k))
 
-(defn mset
-  ([m] (c/mset m))
-  ([redis m]
-   (op redis (c/mset m))))
+(defn mset [^UnifiedJedis redis m]
+  (.mset redis (t/m->array m)))
 
-(defn mget
-  ([ks] (c/mget ks))
-  ([redis ks]
-   (op redis (c/mget ks))))
+(defn mget [^UnifiedJedis redis ks]
+  (.mget redis (into-array ks)))
 
-(defn del
-  ([ks] (c/del ks))
-  ([redis ks]
-   (op redis (c/del ks))))
+(defn del [^UnifiedJedis redis ks]
+  (.del redis (into-array ks)))
 
-(defn exists
-  ([vs] (c/exists vs))
-  ([redis vs]
-   (op redis (c/exists vs))))
+(defn exists [^UnifiedJedis redis vs]
+  (.exists redis (into-array vs)))
 
-(defn type
-  ([k] (c/type k))
-  ([redis k]
-   (op redis (c/type k))))
+(defn type [^UnifiedJedis redis k]
+  (.type redis k))
 
-(defn keys
-  ([k] (c/keys k))
-  ([redis k]
-   (op redis (c/keys k))))
+(defn keys [^UnifiedJedis redis k]
+  (.keys redis k))
 
-(defn incr
-  ([k] (c/incr k))
-  ([redis k]
-   (op redis (c/incr k))))
+(defn incr [^UnifiedJedis redis k]
+  (.incr redis k))
 
-(defn incr-by
-  ([k v] (c/incr-by k v))
-  ([redis k v]
-   (op redis (c/incr-by k v))))
+(defn incr-by [^UnifiedJedis redis k v]
+  (.incrBy redis k v))
 
-(defn decr
-  ([k] (decr k))
-  ([redis k]
-   (op redis (c/decr k))))
+(defn decr [^UnifiedJedis redis k]
+  (.decr redis k))
 
-(defn decr-by
-  ([k v] (c/decr-by k v))
-  ([redis k v]
-   (op redis (c/decr-by k v))))
+(defn decr-by [^UnifiedJedis redis k v]
+  (.decrBy redis k v))
 
 ;; ops
 
-(defn module-load
-  ([path]
-   (c/module-load path))
-  ([redis path]
-   (op redis (c/module-load path))))
+(defn module-load [^UnifiedJedis redis path]
+  (t/send-command redis
+                  c/MODULE
+                  (into-array String ["LOAD" path])))
 
-(defn module-unload
-  ([mname]
-   (c/module-unload mname))
-  ([redis mname]
-   (op redis (c/module-unload mname))))
+(defn module-unload [^UnifiedJedis redis mname]
+  (t/send-command redis
+                  c/MODULE
+                  (into-array String ["UNLOAD" mname])))
 
 ;; pipeline
 
-(defn make-pipeline [conn]
-  (.pipelined conn))
+(defn make-pipeline [^UnifiedJedis redis]
+  (cond
+    (instance? JedisPooled redis) (let [conn (-> redis
+                                                 .getPool
+                                                 .getResource)]
+                                    {:conn conn :pipe (Pipeline. conn)})
+    (instance? JedisCluster redis) (throw (RuntimeException.
+                                            "redis pipeline is not yet supported on the type JedisCluster"))
+    :else (throw (RuntimeException.
+                   (str "redis pipeline is not supported on the type \"" (class redis) "\"")))))
 
 (defn sync-pipeline [pipe]
   (.sync pipe))
@@ -271,14 +319,13 @@
 (defn realize-responses [rs]
   (mapv #(.get %) rs))
 
-(defn pipeline [redis commands]
-  (op redis
-      (fn [conn]
-        (let [pipe (make-pipeline conn)
-              rs (mapv #(% pipe)
+(defn pipeline [^UnifiedJedis redis commands]
+  (let [{:keys [conn pipe]} (make-pipeline redis)]
+    (try (let [rs (map #(% pipe)
                        commands)]
-          (sync-pipeline pipe)
-          (realize-responses rs)))))
+           (sync-pipeline pipe)
+           (realize-responses rs))
+         (finally (.close conn)))))
 
 ;; scaning things
 
@@ -291,7 +338,7 @@
   ([redis s cur]
    (sscan redis s cur {}))
   ([redis s cur params]
-   (let [^ScanResult rs (op redis #(.sscan % s cur (new-scan-params params)))
+   (let [^ScanResult rs (.sscan redis s cur (new-scan-params params))
          batch  (.getResult rs)
          cursor (.getCursor rs)]
      {:batch batch :cursor cursor :done? (.isCompleteIteration rs)})))

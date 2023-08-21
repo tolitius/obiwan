@@ -15,14 +15,14 @@
                      :schema [#:text{:name "nick" :sortable? true}
                               #:text{:name "age" :no-index? true}
                               #:numeric{:name "mass" :sortable? true}]})
-  (redis/hmset conn "solar:planet:earth"
-               {"nick" "the blue planet" "age" "4.543 billion years" "mass" "5974000000000000000000000"})
-  (redis/hmset conn "solar:planet:mars"
-               {"nick" "the red planet" "age" "4.603 billion years" "mass" "639000000000000000000000"})
-  (redis/hmset conn "solar:planet:pluto"
-               {"nick" "tombaugh regio" "age" "4.5 billion years" "mass" "13090000000000000000000"})
-  (redis/hmset conn "solar:planet:moon:charon"
-               {"planet" "pluto" "nick" "char" "age" "4.5 billion years" "mass" "1586000000000000000000"}))
+  (redis/hset conn "solar:planet:earth"
+              {"nick" "the blue planet" "age" "4.543 billion years" "mass" "5974000000000000000000000"})
+  (redis/hset conn "solar:planet:mars"
+              {"nick" "the red planet" "age" "4.603 billion years" "mass" "639000000000000000000000"})
+  (redis/hset conn "solar:planet:pluto"
+              {"nick" "tombaugh regio" "age" "4.5 billion years" "mass" "13090000000000000000000"})
+  (redis/hset conn "solar:planet:moon:charon"
+              {"planet" "pluto" "nick" "char" "age" "4.5 billion years" "mass" "1586000000000000000000"}))
 
 (deftest should-full-text-search-star
   (make-solar-system tt/conn)

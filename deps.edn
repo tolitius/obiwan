@@ -1,10 +1,10 @@
 {:paths ["src"]
 
- :deps {redis.clients/jedis {:mvn/version "4.4.3"}}
+ :deps {redis.clients/jedis {:mvn/version "5.0.0-beta2"}}
 
  :aliases {:dev {:extra-paths ["dev" "dev-resources"]
                  :extra-deps {metosin/jsonista {:mvn/version "0.3.3"}
-                              tolitius/yang {:mvn/version "0.1.29"}
+                              tolitius/yang {:mvn/version "0.1.37"}
                               io.github.clojure/tools.build {:git/sha "6736c83"
                                                              :git/tag "v0.1.9"}
 
