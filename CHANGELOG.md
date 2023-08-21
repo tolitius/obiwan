@@ -1,6 +1,6 @@
 # 0.2.0
 
-* full refactor to support [UnifiedJedis](https://javadoc.io/static/redis.clients/jedis/5.0.0-beta2/redis/clients/jedis/UnifiedJedis.html)
+## full refactor to support [UnifiedJedis](https://javadoc.io/static/redis.clients/jedis/5.0.0-beta2/redis/clients/jedis/UnifiedJedis.html)
 
 which is a stepping stone to JedisCluster, JedisPooled, JedisSentineled, JedisSharding
 
