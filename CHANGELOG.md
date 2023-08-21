@@ -6,9 +6,9 @@ which is a stepping stone to JedisCluster, JedisPooled, JedisSentineled, JedisSh
 
 a few braking changes (hence the minor version bump):
 
-* connecting / disconnecting
+### connecting / disconnecting
 
-pre "`0.2.x`":
+pre `0.2.x`:
 ```clojure
 => (def conn (redis/create-pool))
 => (redis/close-pool conn)
@@ -21,7 +21,7 @@ pre "`0.2.x`":
 => (redis/disconnect conn)
 ```
 
-* configuration params
+### configuration params
 
 some renames, some addtions, some regroupping:
 
@@ -39,9 +39,9 @@ some renames, some addtions, some regroupping:
  :pool-size pool-max-wait pool-max-idle}
 ```
 
-* pipelines
+### pipelines
 
-they are currently on Jedis and will have to be ported to UnifiedJedis
+they are currently on Jedis and will have to be ported to UnifiedJedis<br/>
 in this version they won't work
 
 # 0.1.4809
