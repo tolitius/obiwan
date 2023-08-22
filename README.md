@@ -75,7 +75,7 @@ by default the config map is:
 ```clojure
 ;; {:nodes [{:host "127.0.0.1" :port 6379}]
 ;;  :to :default                                      ;; also supports ":cluster" & ":sentinel"
-;;  :max-attempts JedisCluster/DEFAULT_MAX_ATTEMPTS
+;;  :max-attempts JedisCluster/DEFAULT_MAX_ATTEMPTS   ;; 5 attempts to aquire the connection | execute a command
 ;;  :connection-timeout Protocol/DEFAULT_TIMEOUT      ;; 2 seconds as per Jedis' protocol
 ;;  :socket-timeout Protocol/DEFAULT_TIMEOUT          ;; 2 seconds as per Jedis' protocol
 ;;  :database-index Protocol/DEFAULT_DATABASE         ;; 0 as per Jedis' protocol
@@ -86,7 +86,7 @@ by default the config map is:
 ;;  :pool-max-idle 8}
 ```
 
-closing the pool:
+disconnect from Redis:
 
 ```clojure
 => (redis/disconnect conn)
@@ -98,7 +98,7 @@ closing the pool:
 in order to connect to [Redis Sentinel](https://redis.io/docs/management/sentinel/) a few things need to be provided to obiwan:
 
 * `:to` key in params should say `:sentinel`
-* `:master-name` since Redis client does "[SENTINEL get-master-addr-by-name mymaster](https://redis.io/docs/management/sentinel/#obtaining-the-address-of-the-current-master)" to lookup a master node
+* `:master-name` since Redis client does "[SENTINEL get-master-addr-by-name [master-name]](https://redis.io/docs/management/sentinel/#obtaining-the-address-of-the-current-master)" to lookup a master node
 * `:nodes` in a form of a collection of `{:host :port}` maps
 
 example:
@@ -233,17 +233,21 @@ redis supports [pipelining](https://redis.io/topics/pipelining) to speed up clie
 
 in order to run queries in a pipeline we can create a set of commands at runtime:
 
+> :point_right: _pipeline commands need to use underlined Jedis **Java** functions (e.g. `.hset`, `.hgetAll`, etc.)_<br/>
+> _the reason for that is that Jedis pipeline wraps command responses into Jedis "[Response](https://javadoc.io/static/redis.clients/jedis/5.0.0-beta2/redis/clients/jedis/Response.html)" objects_<br/>
+> _that need to be unwrapped differently:_
+
 ```clojure
-=> (def commands [(redis/hset "numbers" {"1" "one" "2" "two" "3" "three"})
-                  (redis/hset "letters" {"a" "ey" "b" "bee" "c" "cee"})
-                  (redis/hgetall "numbers")
-                  (redis/hgetall "letters")])
+=> (def commands [#(.hset % "numbers" {"1" "one" "2" "two" "3" "three"})
+                  #(.hset % "letters" {"a" "ey" "b" "bee" "c" "cee"})
+                  #(.hgetAll % "numbers")
+                  #(.hgetAll % "letters")])
 ;; #'dev/commands
 ```
 
-notice we did not pass a connection pool, but just created a few command functions
+notice we did not pass a redis connection explicitly, but just created a few command functions
 
-which can now be run in a single pipeline on redis servers:
+which can now be run in a single pipeline on a redis server:
 
 ```clojure
 => (redis/pipeline conn commands)

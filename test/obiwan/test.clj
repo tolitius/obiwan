@@ -51,7 +51,6 @@
     (is (= 3 (redis/hset tt/conn earth details)))
     (is (= details (redis/hgetall tt/conn earth)))))
 
-;; TODO: test pipeline once the pipeline support for JedisPooled & JedisCluster is added
 (deftest should-run-commands-in-pipeline
   (let [numbers {"1" "one" "2" "two" "3" "three"}
         letters {"a" "ey" "b" "bee" "c" "cee"}

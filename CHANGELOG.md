@@ -2,6 +2,29 @@
 
 * command [pipelines](https://github.com/tolitius/obiwan#run-commands-in-a-pipeline) are back in business
 
+one thing to point out: pipeline commands now need to use underlined Jedis Java functions (e.g. `.hset`, `.hgetAll`, etc.)<br/>
+the reason for that is that Jedis pipeline wraps command responses into Jedis "[Response](https://javadoc.io/static/redis.clients/jedis/5.0.0-beta2/redis/clients/jedis/Response.html)" objects that need to be unwrapped differently:
+
+```clojure
+=> (def commands [#(.hset % "numbers" {"1" "one" "2" "two" "3" "three"})
+                  #(.hset % "letters" {"a" "ey" "b" "bee" "c" "cee"})
+                  #(.hgetAll % "numbers")
+                  #(.hgetAll % "letters")])
+;; #'dev/commands
+```
+
+notice we did not pass a redis connection, but just created a few command functions
+
+which can now be run in a single pipeline on redis nodes:
+
+```clojure
+=> (redis/pipeline conn commands)
+;; [3
+;;  3
+;;  {"1" "one", "2" "two", "3" "three"}
+;;  {"a" "ey", "b" "bee", "c" "cee"}]
+```
+
 # 0.2.0
 
 ## full refactor to support [UnifiedJedis](https://javadoc.io/static/redis.clients/jedis/5.0.0-beta2/redis/clients/jedis/UnifiedJedis.html)
