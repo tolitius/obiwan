@@ -303,29 +303,25 @@
 ;; pipeline
 
 (defn make-pipeline [^UnifiedJedis redis]
-  (cond
-    (instance? JedisPooled redis) (let [conn (-> redis
-                                                 .getPool
-                                                 .getResource)]
-                                    {:conn conn :pipe (Pipeline. conn)})
-    (instance? JedisCluster redis) (throw (RuntimeException.
-                                            "redis pipeline is not yet supported on the type JedisCluster"))
-    :else (throw (RuntimeException.
-                   (str "redis pipeline is not supported on the type \"" (class redis) "\"")))))
+  (case (connected-as redis)
+    (:jedis-pooled
+     :jedis-cluster
+     :jedis-sentineled) (.pipelined redis)
+    (throw (RuntimeException.
+             (str "redis pipeline is not supported on the type \"" (class redis) "\"")))))
 
-(defn sync-pipeline [pipe]
-  (.sync pipe))
+(defn sync-pipeline [pipeline]
+  (.sync pipeline))
 
 (defn realize-responses [rs]
   (mapv #(.get %) rs))
 
 (defn pipeline [^UnifiedJedis redis commands]
-  (let [{:keys [conn pipe]} (make-pipeline redis)]
-    (try (let [rs (map #(% pipe)
-                       commands)]
-           (sync-pipeline pipe)
-           (realize-responses rs))
-         (finally (.close conn)))))
+  (let [pipeline (make-pipeline redis)
+        rs (mapv #(% pipeline)
+                 commands)]
+    (sync-pipeline pipeline)
+    (realize-responses rs)))
 
 ;; scaning things
 

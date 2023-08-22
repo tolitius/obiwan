@@ -229,8 +229,6 @@ take a look at [tests](test/obiwan/test.clj) to see how other commands data stru
 
 # run commands in a pipeline
 
-> _(!) pipeline works in `0.1.x`, but not yet in `0.2.x`_
-
 redis supports [pipelining](https://redis.io/topics/pipelining) to speed up client queries.
 
 in order to run queries in a pipeline we can create a set of commands at runtime:

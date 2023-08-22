@@ -1,3 +1,7 @@
+# 0.2.1
+
+* command [pipelines](https://github.com/tolitius/obiwan#run-commands-in-a-pipeline) are back in business
+
 # 0.2.0
 
 ## full refactor to support [UnifiedJedis](https://javadoc.io/static/redis.clients/jedis/5.0.0-beta2/redis/clients/jedis/UnifiedJedis.html)
@@ -47,6 +51,8 @@ some renames, some addtions, some regroupping:
 
 they are currently on Jedis and will have to be ported to UnifiedJedis<br/>
 in this version they won't work
+
+:point_right: but they do in "`0.2.1`" (the next version)
 
 # 0.1.4809
 
