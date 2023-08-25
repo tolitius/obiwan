@@ -231,9 +231,7 @@
 (defn <-tuple
   "this fn transforms the data from redis tuple to clojure map"
   [^Tuple v]
-  (let [score (.getScore v)
-        value (.getElement v)]
-    {(int score) value}))
+  {(.getScore v) (.getElement v)})
 
 (defn zrangewithscores [^UnifiedJedis redis k zmin zmax]
   (->> (.zrangeWithScores redis k zmin zmax)
