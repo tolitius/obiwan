@@ -15,7 +15,8 @@
                                 JedisPoolConfig]
            [redis.clients.jedis.util Pool]
            [redis.clients.jedis.params ScanParams]
-           [redis.clients.jedis.resps ScanResult]
+           [redis.clients.jedis.resps ScanResult
+                                      Tuple]
            [redis.clients.jedis.exceptions JedisConnectionException]
            [java.time Duration]
            [org.apache.commons.pool2.impl GenericObjectPool GenericObjectPoolConfig]))
@@ -226,6 +227,18 @@
 
 (defn zrange [^UnifiedJedis redis k zmin zmax]
   (.zrange redis k zmin zmax))
+
+(defn <-tuple
+  "this fn transforms the data from redis tuple to clojure map"
+  [^Tuple v]
+  (let [score (.getScore v)
+        value (.getElement v)]
+    {(int score) value}))
+
+(defn zrangewithscores [^UnifiedJedis redis k zmin zmax]
+  (->> (.zrangeWithScores redis k zmin zmax)
+       (map #(<-tuple %))
+       (into {})))
 
 ;; set
 
