@@ -1,7 +1,8 @@
 (ns obiwan.commands
   (:refer-clojure :exclude [get])
   (:require [obiwan.tools :as t])
-  (:import [redis.clients.jedis.params SetParams]))
+  (:import [redis.clients.jedis.params SetParams]
+           [redis.clients.jedis.resps Tuple]))
 
 ;; TODO: add params for all commands
 ;;       explicit is good, no macros
@@ -18,3 +19,8 @@
     pxat (.pxAt pxat)
     keepttl (.keepttl)
     get (.get)))
+
+(defn <-tuple
+  "this fn transforms the data from redis tuple to clojure map"
+  [^Tuple v]
+  {(.getScore v) (.getElement v)})
