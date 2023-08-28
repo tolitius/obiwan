@@ -1,3 +1,7 @@
+# 0.2.2
+
+* add [zrange-with-scores](https://github.com/tolitius/obiwan/pull/6), thanks to [HariprasathSankaraiyan](https://github.com/HariprasathSankaraiyan)!
+
 # 0.2.1
 
 * command [pipelines](https://github.com/tolitius/obiwan#run-commands-in-a-pipeline) are back in business

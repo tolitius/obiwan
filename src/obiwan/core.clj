@@ -15,8 +15,7 @@
                                 JedisPoolConfig]
            [redis.clients.jedis.util Pool]
            [redis.clients.jedis.params ScanParams]
-           [redis.clients.jedis.resps ScanResult
-                                      Tuple]
+           [redis.clients.jedis.resps ScanResult]
            [redis.clients.jedis.exceptions JedisConnectionException]
            [java.time Duration]
            [org.apache.commons.pool2.impl GenericObjectPool GenericObjectPoolConfig]))
