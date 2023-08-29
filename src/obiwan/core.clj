@@ -72,9 +72,9 @@
   (when-not (seq master-name)
     (throw (RuntimeException. "can't create a sentineled redis client without a master name. please provide one via a :master-name param")))
 
-  (let [sentinel-config (or sentinel-client-config
-                            ;; make a default sentinel client config is not passed in
-                            (make-client-config (assoc opts
+  (let [sentinel-config (make-client-config (or sentinel-client-config
+                                                ;; make a default sentinel client config is not passed in
+                                                (assoc opts
                                                        :client-name "sentinel-kanobi")))]
     (JedisSentineled. master-name
                       master-client-config
@@ -94,7 +94,11 @@
             ssl?
             client-name
             master-name
-            sentinel-client-config                 ;; if not provided a default config will be created if sentinel is used
+
+            ;; a map of k/v where on which make-client-config will be called
+            ;; if not provided a default config will be created if sentinel is used
+            sentinel-client-config
+
             pool-size pool-max-wait pool-max-idle]
      :or {nodes [{:host "127.0.0.1" :port 6379}]
           to :default

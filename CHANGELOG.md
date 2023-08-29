@@ -1,3 +1,7 @@
+# 0.2.3
+
+take "`sentinel-client-config`" as a map vs. a pre made (by [make-client-config](https://github.com/tolitius/obiwan/blob/d142203eeb29f080dae9dbb760606258d4126e97/src/obiwan/core.clj#L43-L63)) client config.
+
 # 0.2.2
 
 * add [zrange-with-scores](https://github.com/tolitius/obiwan/pull/6), thanks to [HariprasathSankaraiyan](https://github.com/HariprasathSankaraiyan)!
