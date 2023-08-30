@@ -20,15 +20,6 @@
            [java.time Duration]
            [org.apache.commons.pool2.impl GenericObjectPool GenericObjectPoolConfig]))
 
-(defn connected-as [client]
-  (condp instance? client
-    JedisPool         :jedis-pool
-    JedisPooled       :jedis-pooled
-    JedisSentineled   :jedis-sentineled
-    JedisSentinelPool :jedis-sentinel-pool
-    JedisCluster      :jedis-cluster
-    :unknown-client-type))
-
 (defn make-host-and-ports
   "convert [{:host \"1.1.1.1\" :port 6379}
             {:host \"2.2.2.2\" :port 6380}
@@ -136,7 +127,7 @@
 
 (defn disconnect [redis]
   (println "disconnecting from Redis")
-  (case (connected-as redis)
+  (case (t/connected-as redis)
     :jedis-pooled      (-> redis
                            .getPool
                            .destroy)
@@ -154,20 +145,16 @@
       (println ex)
       false)))
 
-;; TODO: waiting on 4.x Jedis branch to open up the BaseGenericObjectPool getters
+;; TODO: waiting on 5.x Jedis branch to open up the BaseGenericObjectPool getters
 (defn pool-stats [redis]
-  (if (= (connected-as redis)
-         :jedis-pooled)
-    (let [pool (.getPool redis)]
-      {:active-resources (.getNumActive pool)
-       ; :max-total (.getMaxTotal pool)
-       ; :max-wait-ms (.getMaxWaitMillis pool)
-       ; :created-count (.getCreatedCount pool)
-       ; :returned-count (.getReturnedCount pool)
-       :number-of-waiters (.getNumWaiters pool)
-       :idle-resources (.getNumIdle pool)})
-    {:pool-stats (str "not supported for "
-                      (connected-as redis))}))
+  (let [pool (t/snatch-connection-pool redis)]
+    {:active-resources (.getNumActive pool)
+     :max-total (.getMaxTotal pool)
+     :max-wait-ms (.getMaxWaitMillis pool)
+     :created-count (.getCreatedCount pool)
+     :returned-count (.getReturnedCount pool)
+     :number-of-waiters (.getNumWaiters pool)
+     :idle-resources (.getNumIdle pool)}))
 
 ;; send arbitrary command to the server
 (defn say
@@ -312,7 +299,7 @@
 ;; pipeline
 
 (defn make-pipeline [^UnifiedJedis redis]
-  (case (connected-as redis)
+  (case (t/connected-as redis)
     (:jedis-pooled
      :jedis-cluster
      :jedis-sentineled) (.pipelined redis)

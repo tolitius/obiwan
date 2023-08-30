@@ -1,3 +1,17 @@
+# 0.2.5
+
+enable pool stats for all Jedis instances
+
+```clojure
+{:active-resources 0,
+ :max-total 42,
+ :max-wait-ms 30000,
+ :created-count 1,
+ :returned-count 888,
+ :number-of-waiters 0,
+ :idle-resources 1}
+```
+
 # 0.2.4
 
 closing pipeline before realizing the responses

@@ -1,6 +1,13 @@
 (ns obiwan.tools
   (:require [clojure.string :as s])
-  (:import [redis.clients.jedis Jedis UnifiedJedis JedisPooled Connection]
+  (:import [redis.clients.jedis Jedis
+                                Connection
+                                UnifiedJedis
+                                JedisCluster
+                                JedisSentineled
+                                JedisSentinelPool
+                                JedisPool
+                                JedisPooled]
            [redis.clients.jedis.util SafeEncoder]
            [redis.clients.jedis.commands ProtocolCommand]))
 
@@ -33,10 +40,56 @@
     (. m (setAccessible true))
     (. m (invoke obj args))))
 
+(defn super-private-field
+  "e.g. => (super-private-field conn
+                                redis.clients.jedis.UnifiedJedis
+                                \"provider\")
+  #object[redis.clients.jedis.providers.SentineledConnectionProvider"
+  [instance
+   super
+   field-name]
+  (. (doto (first (filter
+                    (fn [x] (.. x getName (equals field-name)))
+                    (.getDeclaredFields super)))
+       (.setAccessible true))
+     (get instance)))
+
+(defn private-field
+  "e.g. => (super-private-field conn
+                                \"pool\")
+  #object[redis.clients.jedis.providers.SentineledConnectionProvider"
+  [instance
+   field-name]
+  (. (doto (first (filter
+                    (fn [x] (.. x getName (equals field-name)))
+                    (.. instance getClass getDeclaredFields)))
+       (.setAccessible true))
+     (get instance)))
+
 (defn check-is-in-multi-or-pipeline [conn]
   (super-private-method Jedis
                         conn
                         "checkIsInMultiOrPipeline"))
+
+(defn connected-as [client]
+  (condp instance? client
+    JedisPool         :jedis-pool
+    JedisPooled       :jedis-pooled
+    JedisSentineled   :jedis-sentineled
+    JedisSentinelPool :jedis-sentinel-pool
+    JedisCluster      :jedis-cluster
+    :unknown-client-type))
+
+(defn snatch-connection-pool [redis]
+  (case (connected-as redis)
+    :jedis-pooled (.getPool redis)
+    (:jedis-sentineled :jedis-cluster) (-> redis
+                                           (super-private-field redis.clients.jedis.UnifiedJedis
+                                                                "provider")
+                                            (private-field "pool"))
+    (throw (RuntimeException. (str "can't snatch a connection pool for "
+                                   (connected-as redis)
+                                   " redis connection")))))
 
 (defn make-protocol-command [cname]
   (reify ProtocolCommand
