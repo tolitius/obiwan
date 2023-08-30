@@ -330,6 +330,7 @@
         rs (mapv #(% pipeline)
                  commands)]
     (sync-pipeline pipeline)
+    (.close pipeline)
     (realize-responses rs)))
 
 ;; scaning things

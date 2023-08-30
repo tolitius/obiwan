@@ -61,7 +61,10 @@
     (is (= [(count numbers)
             (count letters)
             numbers
-            letters]        (redis/pipeline tt/conn commands)))))
+            letters]        (redis/pipeline tt/conn commands)))
+    ;; make sure connections don't leak, and are returned to a pool
+    (is (= {:active-resources 0, :number-of-waiters 0, :idle-resources 1}
+           (redis/pool-stats tt/conn)))))
 
 (deftest should-do-basic-commands
   (let [planets #{"mercury"
