@@ -219,9 +219,7 @@
   (.zrange redis k zmin zmax))
 
 (defn zrange-with-scores [^UnifiedJedis redis k zmin zmax]
-  (->> (.zrangeWithScores redis k zmin zmax)
-       (map #(c/<-tuple %))
-       (into {})))
+  (.zrangeWithScores redis k zmin zmax)) ; set with scores are returned as tuples, and if needed can be converted using obiwan.commands/<-tuple.
 
 ;; set
 
