@@ -12,7 +12,8 @@
                                 DefaultJedisClientConfig
                                 JedisPool
                                 JedisPooled
-                                JedisPoolConfig]
+                                JedisPoolConfig
+                                Response]
            [redis.clients.jedis.util Pool]
            [redis.clients.jedis.params ScanParams]
            [redis.clients.jedis.resps ScanResult]
@@ -204,8 +205,15 @@
        (into [])))
 
 (defn hgetall [^UnifiedJedis redis h]
-  (->> (.hgetAll redis h)
-       (into {})))
+      "Takes a `UnifiedJedis` Redis client instance (`redis`) and a hash key (`h`).
+       - If the call is part of a pipeline, returns the `Response` object directly.
+       - Otherwise, returns a clojure map containing all field-value pairs in the hash"
+      (let [result (.hgetAll redis h)]
+           (if (instance? Response result)
+             ;; For pipeline calls, return the Response object directly
+             result
+             ;; For regular calls, convert to map
+             (into {} result))))
 
 (defn hdel [^UnifiedJedis redis h vs]
   (.hdel redis h (into-array String vs)))
@@ -349,3 +357,8 @@
        (f batch)
        (when-not done?
          (recur cursor (sscan redis s cursor params)))))))
+
+(defn expire [^UnifiedJedis redis k ttl]
+      "Sets a timeout on key 'k' for 'ttl' seconds.
+       After the timeout has expired, the key will be automatically  deleted"
+      (.expire redis k ttl))
