@@ -110,6 +110,19 @@ example:
                                   {:host "2.2.2.2" :port 6380}]}))
 ```
 
+sentinel keeps the existing client behavior by default. opt into bounded retries with `:retry? true`, `:max-attempts`, and `:retry-duration-ms`:
+
+```clojure
+(redis/connect {:to :sentinel
+                :master-name "yoda"
+                :nodes [{:host "1.1.1.1" :port 6379}]
+                :retry? true
+                :max-attempts 3
+                :retry-duration-ms 30000})
+```
+
+pool validation and eviction use the existing Jedis defaults. override them with `:test-on-borrow?`, `:test-while-idle?`, `:time-between-eviction-runs-ms`, and `:num-tests-per-eviction-run` when needed.
+
 ### cluster
 
 in order to connect to a [Redis Cluster](https://redis.io/docs/management/scaling/) a few things need to be provided to obiwan:
@@ -780,6 +793,12 @@ $ make test
 
 when running tests, make sure the [embedded redis config](test/resources/config.edn#L3-L6) matches your OS.
 as well as a path to redis server and redis modules.
+
+## sentinel failover recovery
+
+jedis detects sentinel master changes and replaces the master pool. obiwan preserves the existing pool defaults and exposes validation and eviction settings. set `:retry? true` with `:max-attempts` and `:retry-duration-ms` to retry recoverable failures; authentication and command errors are not retried indefinitely.
+
+`redis/disconnect` closes the connections returned by `redis/connect` (`UnifiedJedis` and raw pools), which cascades to closing sentinel listeners and master pools.
 
 # license
 

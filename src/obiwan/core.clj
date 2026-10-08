@@ -18,8 +18,9 @@
            [redis.clients.jedis.params ScanParams]
            [redis.clients.jedis.resps ScanResult]
            [redis.clients.jedis.exceptions JedisConnectionException]
+           [redis.clients.jedis.providers SentineledConnectionProvider]
            [java.time Duration]
-           [org.apache.commons.pool2.impl GenericObjectPool GenericObjectPoolConfig]))
+           [org.apache.commons.pool2.impl BaseObjectPoolConfig GenericObjectPool GenericObjectPoolConfig]))
 
 (defn make-host-and-ports
   "convert [{:host \"1.1.1.1\" :port 6379}
@@ -58,21 +59,34 @@
                        master-client-config
                        sentinels
                        {:keys [master-name
-                               sentinel-client-config]
+                               sentinel-client-config
+                               max-attempts
+                               retry?
+                               retry-duration-ms]
                         :as opts}]
 
   (when-not (seq master-name)
     (throw (RuntimeException. "can't create a sentineled redis client without a master name. please provide one via a :master-name param")))
 
   (let [sentinel-config (make-client-config (or sentinel-client-config
-                                                ;; make a default sentinel client config is not passed in
+                                                ;; create a default sentinel client config when one is not provided
                                                 (assoc opts
-                                                       :client-name "sentinel-kanobi")))]
-    (JedisSentineled. master-name
-                      master-client-config
-                      pool-config
-                      sentinels
-                      sentinel-config)))
+                                                       :client-name "sentinel-kanobi")))
+        provider (SentineledConnectionProvider.
+                  master-name
+                  master-client-config
+                  pool-config
+                  sentinels
+                  sentinel-config)]
+    (if retry?
+      (do
+        (when-not (and (pos-int? max-attempts) (pos-int? retry-duration-ms))
+          (throw (RuntimeException. "retry? requires max-attempts and retry-duration-ms to be positive integers")))
+        (println (str "sentinel master " master-name ": retrying commands up to " max-attempts " attempts over " retry-duration-ms "ms"))
+        (UnifiedJedis. provider
+                       max-attempts
+                       (Duration/ofMillis retry-duration-ms)))
+      (JedisSentineled. provider))))
 
 (defn connect
   ([]
@@ -91,18 +105,32 @@
             ;; if not provided a default config will be created if sentinel is used
             sentinel-client-config
 
-            pool-size pool-max-wait pool-max-idle]
+            pool-size pool-max-wait pool-max-idle
+            retry?
+            retry-duration-ms
+            test-on-borrow?
+            test-while-idle?
+            time-between-eviction-runs-ms
+            num-tests-per-eviction-run]
      :or {nodes [{:host "127.0.0.1" :port 6379}]
           to :default
           max-attempts JedisCluster/DEFAULT_MAX_ATTEMPTS
           pool-size 42
           pool-max-wait 30000
-          pool-max-idle 8}
+          pool-max-idle 8
+          test-on-borrow? BaseObjectPoolConfig/DEFAULT_TEST_ON_BORROW
+          test-while-idle? BaseObjectPoolConfig/DEFAULT_TEST_WHILE_IDLE
+          time-between-eviction-runs-ms BaseObjectPoolConfig/DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS
+          num-tests-per-eviction-run BaseObjectPoolConfig/DEFAULT_NUM_TESTS_PER_EVICTION_RUN}
      :as opts}]
    (let [pool-config      (doto (JedisPoolConfig.)
                             (.setMaxTotal pool-size)
                             (.setMaxIdle pool-max-idle)
-                            (.setMaxWaitMillis pool-max-wait))
+                            (.setMaxWaitMillis pool-max-wait)
+                            (.setTestOnBorrow test-on-borrow?)
+                            (.setTestWhileIdle test-while-idle?)
+                            (.setTimeBetweenEvictionRunsMillis time-between-eviction-runs-ms)
+                            (.setNumTestsPerEvictionRun num-tests-per-eviction-run))
          client-config    (make-client-config opts)
          hosts-and-ports  (make-host-and-ports nodes)]
      (case to
@@ -124,16 +152,13 @@
                                       hosts-and-ports
                                       opts))
        (throw (RuntimeException.
-                (str "\"" to "\" is an unknown source to connect to. supported are \":default\" and \":cluster\"")))))))
+               (str "\"" to "\" is an unknown source to connect to. supported are \":default\", \":cluster\", and \":sentinel\"")))))))
 
 (defn disconnect [redis]
   (println "disconnecting from Redis")
-  (case (t/connected-as redis)
-    :jedis-pooled      (-> redis
-                           .getPool
-                           .destroy)
-    :jedis-sentineled  :tbd
-    :jedis-cluster     :tbd)
+  (cond
+    (instance? UnifiedJedis redis) (.close ^UnifiedJedis redis)
+    (instance? Pool redis) (.destroy ^Pool redis))
   :disconnected-from-redis)
 
 (declare say)

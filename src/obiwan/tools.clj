@@ -8,6 +8,7 @@
                                 JedisSentinelPool
                                 JedisPool
                                 JedisPooled]
+           [redis.clients.jedis.providers SentineledConnectionProvider]
            [redis.clients.jedis.util SafeEncoder]
            [redis.clients.jedis.commands ProtocolCommand]))
 
@@ -78,15 +79,19 @@
     JedisSentineled   :jedis-sentineled
     JedisSentinelPool :jedis-sentinel-pool
     JedisCluster      :jedis-cluster
+    UnifiedJedis      (if (instance? SentineledConnectionProvider
+                                     (super-private-field client UnifiedJedis "provider"))
+                        :jedis-sentineled-with-retry
+                        :unknown-client-type)
     :unknown-client-type))
 
 (defn snatch-connection-pool [redis]
   (case (connected-as redis)
     :jedis-pooled (.getPool redis)
-    (:jedis-sentineled :jedis-cluster) (-> redis
-                                           (super-private-field redis.clients.jedis.UnifiedJedis
-                                                                "provider")
-                                            (private-field "pool"))
+    (:jedis-sentineled :jedis-cluster :jedis-sentineled-with-retry)
+    (-> redis
+        (super-private-field redis.clients.jedis.UnifiedJedis "provider")
+        (private-field "pool"))
     (throw (RuntimeException. (str "can't snatch a connection pool for "
                                    (connected-as redis)
                                    " redis connection")))))
